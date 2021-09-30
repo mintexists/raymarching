@@ -4,7 +4,7 @@ let scaleX = 10;
 let scaleY = -10;
 let xOffset = canvas.width / 2;
 let yOffset = canvas.height / 2;
-let minStep = 1 / 100;
+let minStep = 1 / 10;
 let maxDistance = 500;
 let mouseDown = false;
 let rad2deg = (rad) => 180 / (Math.PI * rad);
@@ -27,18 +27,20 @@ class Circle {
     }
     distance(pos, radius = this.radius) {
         return pythag(pos, this.position) - radius;
-        //return Math.sqrt( (pos.x - this.position.x) ** 2 + (pos.y - this.position.y) ** 2) - radius
     }
 }
 class Rectangle {
-    constructor(position = new Position(0, 0), width = 1, height = 1) {
+    constructor(position = new Position(0, 0), width, height = 1, angle = 0) {
+        this.angle = angle;
         this.position = position;
         this.width = width;
         this.height = height;
     }
     distance(pos) {
+        this.radAngle = deg2rad(this.angle);
         let localPos = new Position(pos.x - this.position.x, pos.y - this.position.y);
-        return Math.max(Math.abs(localPos.x) - this.width / 2, Math.abs(localPos.y) - this.height / 2);
+        let newPos = new Position(localPos.x * Math.cos(this.radAngle) - localPos.y * Math.sin(this.radAngle), localPos.y * Math.cos(this.radAngle) + localPos.x * Math.sin(this.radAngle));
+        return Math.max(Math.abs(newPos.x) - this.width / 2, Math.abs(newPos.y) - this.height / 2);
     }
 }
 class Subtract {
@@ -87,11 +89,12 @@ class Onion {
     }
 }
 let objects = [];
-objects.push(new Circle(new Position(-30, 0), 5));
-objects.push(new Onion(new Rectangle(new Position(-30, 20), 20, 10), 1));
+//objects.push(new Circle(new Position(-30, 0), 5))
+//objects.push(new Onion(new Rectangle(new Position(-30,20), 20, 10), 1))
 //objects.push(new Rectangle(new Position(20, 0), 20, 10))
+objects.push(new Rectangle(new Position(20, 20), 20, 10, 0));
 // objects.push(new Circle(new Position(30,0), 20))
-objects.push(new Subtract(new Circle(new Position(30, 0), 15), new Onion(new Rectangle(new Position(20, 0), 20, 10), 1)));
+//objects.push(new Subtract(new Circle(new Position(30,0), 15), new Onion(new Rectangle(new Position(20, 0), 20, 10), 1)))
 // ctx.beginPath();
 // ctx.arc(xOffset, yOffset, 5, 0, 2 * Math.PI);
 // ctx.stroke();
@@ -129,7 +132,7 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "white";
-    for (let i = 0; i < 360; i += .1) {
+    for (let i = 0; i < 360; i += 1 / 15) {
         let rayPos = new Position(camera.x, camera.y);
         let distance = minStep;
         let totalDistance = 0;
@@ -193,12 +196,10 @@ canvas.addEventListener('mouseup', e => {
         mouseDown = false;
     }
 });
-let frame = 0;
 function main() {
     draw();
-    objects[0].position.y = Math.sin(frame / 40) * 40;
+    objects[0].angle++;
     window.requestAnimationFrame(main);
-    frame++;
 }
 main();
 //# sourceMappingURL=index.js.map
