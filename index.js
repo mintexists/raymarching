@@ -62,12 +62,14 @@ class Intersect {
     }
 }
 class Union {
-    constructor(first, second) {
+    constructor(first, second, k = minStep) {
         this.first = first;
         this.second = second;
+        this.k = k;
     }
     distance(pos) {
-        return Math.min(this.first.distance(pos), this.second.distance(pos));
+        return sMin(this.first.distance(pos), this.second.distance(pos), this.k);
+        //return Math.min(this.first.distance(pos), this.second.distance(pos))
     }
 }
 class Round {
@@ -92,40 +94,10 @@ let objects = [];
 //objects.push(new Circle(new Position(-30, 0), 5))
 //objects.push(new Onion(new Rectangle(new Position(-30,20), 20, 10), 1))
 //objects.push(new Rectangle(new Position(20, 0), 20, 10))
-objects.push(new Rectangle(new Position(20, 20), 20, 10, 0));
+//objects.push(new Rectangle(new Position(20, 20), 20, 10, 0))
 // objects.push(new Circle(new Position(30,0), 20))
-//objects.push(new Subtract(new Circle(new Position(30,0), 15), new Onion(new Rectangle(new Position(20, 0), 20, 10), 1)))
-// ctx.beginPath();
-// ctx.arc(xOffset, yOffset, 5, 0, 2 * Math.PI);
-// ctx.stroke();
-// Make this not be hell please Uwu
-/* objects.forEach(object => {
-    if (object instanceof Subtract) {
-        ctx.strokeStyle = "red"
-        ctx.beginPath()
-        ctx.arc(object.subtractor.position.x * scaleX + xOffset, object.subtractor.position.y * scaleY + yOffset, object.subtractor.radius * scaleX, 0, 2 * Math.PI);
-        ctx.stroke()
-        ctx.strokeStyle = "red"
-        ctx.beginPath()
-        ctx.arc(object.subtractee.position.x * scaleX + xOffset, object.subtractee.position.y * scaleY + yOffset, object.subtractee.radius * scaleX, 0, 2 * Math.PI);
-        ctx.stroke()
-    } else if (object instanceof Intersect) {
-        ctx.strokeStyle = "red"
-        ctx.beginPath()
-        ctx.arc(object.intersector.position.x * scaleX + xOffset, object.intersector.position.y * scaleY + yOffset, object.intersector.radius * scaleX, 0, 2 * Math.PI);
-        ctx.stroke()
-        ctx.strokeStyle = "red"
-        ctx.beginPath()
-        ctx.arc(object.intersectee.position.x * scaleX + xOffset, object.intersectee.position.y * scaleY + yOffset, object.intersectee.radius * scaleX, 0, 2 * Math.PI);
-        ctx.stroke()
-    } else {
-        ctx.strokeStyle = "red"
-        ctx.beginPath()
-        ctx.arc(object.position.x * scaleX + xOffset, object.position.y * scaleY + yOffset, Math.abs(object.radius) * scaleX, 0, 2 * Math.PI);
-        ctx.stroke()
-    }
-})
- */
+//objects.push(new Subtract(new Circle(new Position(30,0), 15), new Onion(new Rectangle(new Position(20, 0), 20, 10, 20), 2)))
+objects.push(new Union(new Subtract(new Rectangle(new Position(0, 0), 20, 20, 45), new Rectangle(new Position(0, 14.14), 28.28, 28.28)), new Union(new Intersect(new Circle(new Position(-7.07, 0), 7.07), new Rectangle(new Position(0, 7.07), 30, 30, 45)), new Intersect(new Circle(new Position(7.07, 0), 7.07), new Rectangle(new Position(0, 7.07), 30, 30, 45)))));
 let camera = new Position(0, 0);
 function draw() {
     ctx.fillStyle = "black";
@@ -142,7 +114,7 @@ function draw() {
             }
             let distances = [];
             objects.forEach(object => {
-                distances.push(object.distance(rayPos));
+                distances.push(Math.abs(object.distance(rayPos)));
             });
             /*distance = maxDistance
             distances.forEach(dist => {
@@ -198,7 +170,6 @@ canvas.addEventListener('mouseup', e => {
 });
 function main() {
     draw();
-    objects[0].angle++;
     window.requestAnimationFrame(main);
 }
 main();
