@@ -7,7 +7,7 @@ let scaleY = -10
 let xOffset = canvas.width / 2
 let yOffset = canvas.height / 2
 
-let minStep = .1
+let minStep = 1/100
 let maxDistance = 500
 
 let mouseDown = false
@@ -16,6 +16,11 @@ let rad2deg = (rad: number) => 180 / (Math.PI * rad)
 let deg2rad = (deg: number) => deg * (Math.PI / 180)
 
 let pythag = (pos1: Position, pos2: Position) => Math.sqrt((pos1.x-pos2.x)**2 + (pos1.y-pos2.y)**2)
+
+function sMin(a: number, b: number, k: number) {
+    let h: number = Math.max(k - Math.abs(a - b), 0) / k
+    return Math.min(a, b) - h * h * k * (1/4)
+}
 
 class Position {
     x: number
@@ -44,51 +49,16 @@ class Rectangle {
     position: Position
     width: number
     height: number
-    angle: number
-    constructor(position = new Position(0,0), width = 1, height = 1, angle = 0) {
+    constructor(position = new Position(0,0), width = 1, height = 1) {
         this.position = position
         this.width = width
         this.height = height
-        this.angle = angle
     }
 
     distance(pos: Position) {
-        let d = Math.tan(deg2rad(this.angle))
-        d = d == undefined ? 0 : d
-        d = d == 16331239353195370 ? Number.MAX_SAFE_INTEGER : d
-        let dO = Math.tan(deg2rad(this.angle + 90))
-        dO = dO == undefined ? 0 : dO
-        dO = dO == 16331239353195370 ? Number.MAX_SAFE_INTEGER : dO
         let localPos = new Position(pos.x - this.position.x, pos.y - this.position.y)
-        let wOffset = Math.sin(deg2rad(this.angle)) * this.width/2
-        let hOffset = Math.cos(deg2rad(this.angle)) * this.height/2
-        let wOffsetO = Math.sin(deg2rad(this.angle + 90)) * this.width/2
-        let hOffsetO = Math.cos(deg2rad(this.angle + 90)) * this.height/2
-        
-        if (localPos.y < d * (localPos.x - wOffset) + hOffset && localPos.y > d * (localPos.x + wOffset) - hOffset) {
-            // Left n right walls
-            return Math.min(
-                pythag(new Position(this.width/2,0), new Position(localPos.x, d * localPos.x)),
-                pythag(new Position(-this.width/2,0), new Position(localPos.x, d * localPos.x))
-            )
-        }
 
-        if (localPos.y > dO * (localPos.x + wOffsetO) - hOffsetO && localPos.y < dO * (localPos.x - wOffsetO) + hOffsetO) {
-            // up n down walls
-            return Math.min(
-                pythag(new Position(0,this.height/2), new Position(localPos.x, dO * localPos.x)),
-                pythag(new Position(0,-this.height/2), new Position(localPos.x, dO * localPos.x))
-            )
-        }
-
-        /*return Math.min(
-            pythag(localPos, new Position( -wOffset - hOffset, -wOffset + hOffset)),
-            pythag(localPos, new Position( -wOffset + hOffset,  wOffset + hOffset)),
-            pythag(localPos, new Position(  wOffset - hOffset, -wOffset - hOffset)),
-            pythag(localPos, new Position(  wOffset + hOffset,  wOffset - hOffset)),
-        )*/
-        
-        return maxDistance
+        return Math.max(Math.abs(localPos.x) - this.width/2, Math.abs(localPos.y) - this.height/2)
     }
 }
 
@@ -144,11 +114,29 @@ class Round {
     }
 }
 
+class Onion {
+    object: any
+    width: number 
+    constructor(object, width) {
+        this.object = object
+        this.width = width
+    }
+
+    distance(pos: Position) {
+        return Math.abs(this.object.distance(pos)) - this.width
+    }
+}
+
 let objects = []
 
-objects.push(new Rectangle(new Position(20, 0), 20, 10, 0))
+objects.push(new Circle(new Position(-30, 0), 5))
 
-//objects.push(new Subtract(new Circle(new Position(30,0), 20), new Circle(new Position(10, 0), 10)))
+objects.push(new Onion(new Rectangle(new Position(-30,20), 20, 10), 1))
+
+//objects.push(new Rectangle(new Position(20, 0), 20, 10))
+// objects.push(new Circle(new Position(30,0), 20))
+
+objects.push(new Subtract(new Circle(new Position(30,0), 15), new Onion(new Rectangle(new Position(20, 0), 20, 10), 1)))
 
 // ctx.beginPath();
 // ctx.arc(xOffset, yOffset, 5, 0, 2 * Math.PI);
@@ -210,6 +198,11 @@ function draw() {
             objects.forEach(object => {
                 distances.push(object.distance(rayPos))
             })
+
+            /*distance = maxDistance
+            distances.forEach(dist => {
+                distance = sMin(distance, dist, .1)
+            })*/
 
             distance = Math.min(...distances)
             totalDistance += distance
@@ -273,12 +266,15 @@ canvas.addEventListener('mouseup', e => {
 });
   
 
-
+let frame = 0
 function main() {
 
     draw()
 
+    objects[0].position.y = Math.sin(frame/40)*40
+
     window.requestAnimationFrame(main)
+    frame++
 }
 
 main()
