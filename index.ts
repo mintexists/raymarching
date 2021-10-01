@@ -82,38 +82,31 @@ class Triangle {
 
         let slopeA = - ((this.p1.y - this.p2.y) / (this.p1.x - this.p2.x))
         let slopeB = - ((this.p2.y - this.p3.y) / (this.p2.x - this.p3.x))
-        let slopeC = - ((this.p3.y - this.p1.y) / (this.p3.x - this.p1.x))
 
         let pointA = new Position( (this.p1.x + this.p2.x) / 2, (this.p1.y + this.p2.y) / 2 )
         let pointB = new Position( (this.p2.x + this.p3.x) / 2, (this.p2.y + this.p3.y) / 2 )
-        let pointC = new Position( (this.p3.x + this.p1.x) / 2, (this.p3.y + this.p1.y) / 2 )
 
         let localPosA = new Position(pos.x - pointA.x, pos.y - pointA.y)
         let localPosB = new Position(pos.x - pointB.x, pos.y - pointB.y)
-        let localPosC = new Position(pos.x - pointC.x, pos.y - pointC.y)
 
         let angleA = Math.atan(slopeA)
         let angleB = Math.atan(slopeB)
-        let angleC = Math.atan(slopeC)
 
         let newPosA = new Position(
             localPosA.x * Math.cos(angleA) - localPosA.y * Math.sin(angleA), 
             localPosA.y * Math.cos(angleA) + localPosA.x * Math.sin(angleA)
         )
+
         let newPosB = new Position(
             localPosB.x * Math.cos(angleB) - localPosB.y * Math.sin(angleB), 
             localPosB.y * Math.cos(angleB) + localPosB.x * Math.sin(angleB)
-        )
-        let newPosC = new Position(
-            localPosC.x * Math.cos(angleC) - localPosC.y * Math.sin(angleC), 
-            localPosC.y * Math.cos(angleC) + localPosC.x * Math.sin(angleC)
         )
         
         //console.log(Math.abs(newPosA.y), Math.abs(newPosB.y), Math.abs(newPosC.y))
         //return Math.min(Math.abs(newPosA.y), Math.abs(newPosB.y), Math.abs(newPosC.y))
         //return Math.max((newPosA.y), (newPosB.y), (newPosC.y))
         
-        return (newPosA.y + newPosB.y + newPosC.y) / 3
+        return Math.max(-newPosA.y, newPosB.y)
 
     }
 }
@@ -191,7 +184,7 @@ let objects = []
 //objects.push(new Circle(new Position(-30, 0), 5))
 
 //objects.push(new Rectangle(new Position(30,10), 20, 10))
-objects.push(new Triangle(new Position(0,0), new Position(10,10), new Position(10,0)))
+objects.push(new Triangle(new Position(0,0), new Position(10,0), new Position(0,10)))
 
 //objects.push(new Rectangle(new Position(20, 0), 20, 10))
 //objects.push(new Rectangle(new Position(20, 20), 20, 10, 0))
@@ -245,7 +238,7 @@ function draw() {
             let distances: Array<number> = []
 
             objects.forEach(object => {
-                distances.push(Math.abs(object.distance(rayPos)))
+                distances.push(object.distance(rayPos))
             })
 
             /*distance = maxDistance
