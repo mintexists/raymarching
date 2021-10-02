@@ -80,33 +80,36 @@ class Triangle {
 
     distance(pos: Position) {
 
-        let slopeA = - ((this.p1.y - this.p2.y) / (this.p1.x - this.p2.x))
-        let slopeB = - ((this.p2.y - this.p3.y) / (this.p2.x - this.p3.x))
+        
+        
+        return maxDistance
 
-        let pointA = new Position( (this.p1.x + this.p2.x) / 2, (this.p1.y + this.p2.y) / 2 )
-        let pointB = new Position( (this.p2.x + this.p3.x) / 2, (this.p2.y + this.p3.y) / 2 )
+    }
+}
 
-        let localPosA = new Position(pos.x - pointA.x, pos.y - pointA.y)
-        let localPosB = new Position(pos.x - pointB.x, pos.y - pointB.y)
+class Line {
+    p1: Position
+    p2: Position
+    constructor(p1, p2) {
+        this.p1 = p1
+        this.p2 = p2
+    }
 
-        let angleA = Math.atan(slopeA)
-        let angleB = Math.atan(slopeB)
+    distance(pos: Position) {
 
-        let newPosA = new Position(
-            localPosA.x * Math.cos(angleA) - localPosA.y * Math.sin(angleA), 
-            localPosA.y * Math.cos(angleA) + localPosA.x * Math.sin(angleA)
+        let angle = Math.atan(- (this.p1.x - this.p2.x) / (this.p1.y - this.p2.y)) 
+ 
+        let midpoint = new Position((this.p1.x + this.p2.x) / 2, (this.p1.y + this.p2.y) / 2)
+
+        let localPos = new Position(pos.x - midpoint.x, pos.y - midpoint.y)
+
+        let newPos = new Position(
+            localPos.x * Math.cos(angle) - localPos.y * Math.sin(angle), 
+            localPos.y * Math.cos(angle) + localPos.x * Math.sin(angle)
         )
 
-        let newPosB = new Position(
-            localPosB.x * Math.cos(angleB) - localPosB.y * Math.sin(angleB), 
-            localPosB.y * Math.cos(angleB) + localPosB.x * Math.sin(angleB)
-        )
-        
-        //console.log(Math.abs(newPosA.y), Math.abs(newPosB.y), Math.abs(newPosC.y))
-        //return Math.min(Math.abs(newPosA.y), Math.abs(newPosB.y), Math.abs(newPosC.y))
-        //return Math.max((newPosA.y), (newPosB.y), (newPosC.y))
-        
-        return Math.max(-newPosA.y, newPosB.y)
+        //return Math.max(Math.abs(newPos.x), Math.abs(pos.x - this.p1.x), Math.abs(pos.x - this.p2.x))
+        return Math.max(Math.abs(newPos.y), Math.abs(newPos.x) - (pos.x - this.p1.x), Math.abs(newPos.x) - (pos.x - this.p2.x))
 
     }
 }
@@ -181,10 +184,13 @@ class Onion {
 
 let objects = []
 
-//objects.push(new Circle(new Position(-30, 0), 5))
+objects.push(new Circle(new Position(-40, 0), 1))
 
 //objects.push(new Rectangle(new Position(30,10), 20, 10))
-objects.push(new Triangle(new Position(0,0), new Position(10,0), new Position(0,10)))
+
+//objects.push(new Triangle(new Position(0,0), new Position(10,10), new Position(10,0)))
+
+objects.push(new Line(new Position(0,0), new Position(10,10)))
 
 //objects.push(new Rectangle(new Position(20, 0), 20, 10))
 //objects.push(new Rectangle(new Position(20, 20), 20, 10, 0))
@@ -192,7 +198,7 @@ objects.push(new Triangle(new Position(0,0), new Position(10,0), new Position(0,
 
 // objects.push(new Circle(new Position(30,0), 20))
 
-//objects.push(new Subtract(new Circle(new Position(30,0), 15), new Onion(new Rectangle(new Position(20, 0), 20, 10, 20), 2)))
+objects.push(new Subtract(new Circle(new Position(30,0), 15), new Onion(new Rectangle(new Position(20, 0), 20, 10, 20), 2)))
 
 // objects.push(
 //     new Union(
@@ -215,6 +221,7 @@ objects.push(new Triangle(new Position(0,0), new Position(10,0), new Position(0,
 
 let camera = new Position(0,0)
 
+let offset = 0
 function draw() {
 
     ctx.fillStyle = "black"
@@ -222,7 +229,7 @@ function draw() {
     ctx.fillRect(0,0,canvas.width,canvas.height)
 
     ctx.fillStyle = "white"
-    for (let i = 0; i < 360; i+=1) {
+    for (let i = 0+offset; i < 360+offset; i+=1) {
 
         let rayPos = new Position(camera.x, camera.y)
 
@@ -311,6 +318,8 @@ canvas.addEventListener('mouseup', e => {
 function main() {
 
     draw()
+
+    //offset+=1/10
 
     window.requestAnimationFrame(main)
 }
