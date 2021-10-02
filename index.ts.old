@@ -1,8 +1,8 @@
 let canvas = document.getElementById("canvas") as HTMLCanvasElement
 let ctx = canvas.getContext("2d")
 
-let scaleX = 1
-let scaleY = 1
+let scaleX = 10
+let scaleY = -10
 
 let xOffset = canvas.width / 2
 let yOffset = canvas.height / 2
@@ -15,7 +15,7 @@ let mouseDown = false
 let rad2deg = (rad: number) => (180 / Math.PI) * rad
 let deg2rad = (deg: number) => deg * (Math.PI / 180)
 
-let pythag = (pos1: Position, pos2: Position) => Math.sqrt((pos1.x-pos2.x)**2 + (pos1.y-pos2.y)**2 + (pos1.z-pos2.z)**2)
+let pythag = (pos1: Position, pos2: Position) => Math.sqrt((pos1.x-pos2.x)**2 + (pos1.y-pos2.y)**2)
 
 function sMin(a: number, b: number, k: number) {
     let h: number = Math.max(k - Math.abs(a - b), 0) / k
@@ -25,18 +25,16 @@ function sMin(a: number, b: number, k: number) {
 class Position {
     x: number
     y: number
-    z: number
-    constructor(x = 0, y = 0, z = 0) {
+    constructor(x = 0, y = 0) {
         this.x = x
         this.y = y
-        this.z = z
     }
 }
 
-class Sphere {
+class Circle {
     position: Position
     radius: number
-    constructor(position, radius = 1) {
+    constructor(position = new Position(0,0), radius = 1) {
         this.position = position
         this.radius = radius
     }
@@ -46,7 +44,7 @@ class Sphere {
     }
 }
 
-/*class Rectangle {
+class Rectangle {
     position: Position
     width: number
     height: number
@@ -182,19 +180,17 @@ class Onion {
     distance(pos: Position) {
         return Math.abs(this.object.distance(pos)) - this.width
     }
-}*/
+}
 
 let objects = []
 
-objects.push(new Sphere(new Position(40,0,0), 30))
-
-// objects.push(new Circle(new Position(-40, 0), 1))
+objects.push(new Circle(new Position(-40, 0), 1))
 
 //objects.push(new Rectangle(new Position(30,10), 20, 10))
 
 //objects.push(new Triangle(new Position(0,0), new Position(10,10), new Position(10,0)))
 
-// objects.push(new Line(new Position(0,0), new Position(10,10)))
+objects.push(new Line(new Position(0,0), new Position(10,10)))
 
 //objects.push(new Rectangle(new Position(20, 0), 20, 10))
 //objects.push(new Rectangle(new Position(20, 20), 20, 10, 0))
@@ -202,7 +198,7 @@ objects.push(new Sphere(new Position(40,0,0), 30))
 
 // objects.push(new Circle(new Position(30,0), 20))
 
-// objects.push(new Subtract(new Circle(new Position(30,0), 15), new Onion(new Rectangle(new Position(20, 0), 20, 10, 20), 2)))
+objects.push(new Subtract(new Circle(new Position(30,0), 15), new Onion(new Rectangle(new Position(20, 0), 20, 10, 20), 2)))
 
 // objects.push(
 //     new Union(
@@ -223,121 +219,69 @@ objects.push(new Sphere(new Position(40,0,0), 30))
 //     )
 // )
 
-let pixel = (x: number, y: number, shade: number) => {
-    ctx.fillStyle = `rgb(${shade*255}, ${shade*255}, ${shade*255})`
-    ctx.fillRect( x, y, 1, 1 );
-}
+let camera = new Position(0,0)
 
-let camera = new Position(0,0,0)
-
+let offset = 0
 function draw() {
 
     ctx.fillStyle = "black"
     ctx.clearRect(0,0,canvas.width,canvas.height)
     ctx.fillRect(0,0,canvas.width,canvas.height)
 
-    for (let x = 0; x < canvas.width; x++) {
-        for (let y = 0; y < canvas.height; y++) {
+    ctx.fillStyle = "white"
+    for (let i = 0+offset; i < 360+offset; i+=1) {
 
-            let fov = 1
+        let rayPos = new Position(camera.x, camera.y)
 
-            let distance = minStep;
-            let totalDistance = 0
+        let distance = minStep;
+        let totalDistance = 0
 
-            let rayPos = new Position(camera.x, camera.y, camera.z)
+        while (true) {
 
-            //  x = left+right
-            //  y = up+down
-            //  z = forward+back
-
-            let vector = new Position((x / canvas.width), (y / canvas.width), 1)
-
-            while (true) {
-
-                if (totalDistance > maxDistance || distance < minStep) {
-                    break
-                }
-
-                let distances: Array<number> = []
-
-                objects.forEach(object => {
-                    distances.push(object.distance(rayPos))
-                })
-
-                distance = Math.min(...distances)
-                totalDistance += distance
-
-                //rayPos.x += (x / 1000) * distance
-                //rayPos.y += (x / 1000) * distance
-
-                rayPos.x += vector.x * distance
-                rayPos.y += vector.y * distance
-                rayPos.z += vector.z * distance
-
+            if (totalDistance > maxDistance || distance < minStep) {
+                break
             }
 
-            pixel(x, y, distance/maxDistance)
+            let distances: Array<number> = []
+
+            objects.forEach(object => {
+                distances.push(object.distance(rayPos))
+            })
+
+            /*distance = maxDistance
+            distances.forEach(dist => {
+                distance = sMin(distance, dist, .1)
+            })*/
+
+            distance = Math.min(...distances)
+            totalDistance += distance
+
+            if (/* i % 36 == 0 */ false) {
+                ctx.strokeStyle = "black"
+                ctx.beginPath();
+                ctx.moveTo(camera.x * scaleX + xOffset, camera.y * scaleY + yOffset)
+                ctx.lineTo(rayPos.x * scaleX + xOffset, rayPos.y * scaleY + yOffset)
+                ctx.stroke();
+
+                ctx.strokeStyle = "red"
+                ctx.beginPath()
+                ctx.arc(rayPos.x * scaleX + xOffset, rayPos.y * scaleY + yOffset, distance * scaleX, 0, 2 * Math.PI);
+                ctx.stroke()
+            }
+
+
+            rayPos.x += Math.cos(deg2rad(i)) * distance
+            rayPos.y += Math.sin(deg2rad(i)) * distance
+
         }
-    }
 
-    // ctx.fillStyle = "black"
-    // ctx.clearRect(0,0,canvas.width,canvas.height)
-    // ctx.fillRect(0,0,canvas.width,canvas.height)
-
-    // ctx.fillStyle = "white"
-    // for (let i = 0+offset; i < 360+offset; i+=1) {
-
-    //     let rayPos = new Position(camera.x, camera.y)
-
-    //     let distance = minStep;
-    //     let totalDistance = 0
-
-    //     while (true) {
-
-    //         if (totalDistance > maxDistance || distance < minStep) {
-    //             break
-    //         }
-
-    //         let distances: Array<number> = []
-
-    //         objects.forEach(object => {
-    //             distances.push(object.distance(rayPos))
-    //         })
-
-    //         /*distance = maxDistance
-    //         distances.forEach(dist => {
-    //             distance = sMin(distance, dist, .1)
-    //         })*/
-
-    //         distance = Math.min(...distances)
-    //         totalDistance += distance
-
-    //         if (/* i % 36 == 0 */ false) {
-    //             ctx.strokeStyle = "black"
-    //             ctx.beginPath();
-    //             ctx.moveTo(camera.x * scaleX + xOffset, camera.y * scaleY + yOffset)
-    //             ctx.lineTo(rayPos.x * scaleX + xOffset, rayPos.y * scaleY + yOffset)
-    //             ctx.stroke();
-
-    //             ctx.strokeStyle = "red"
-    //             ctx.beginPath()
-    //             ctx.arc(rayPos.x * scaleX + xOffset, rayPos.y * scaleY + yOffset, distance * scaleX, 0, 2 * Math.PI);
-    //             ctx.stroke()
-    //         }
-
-
-    //         rayPos.x += Math.cos(deg2rad(i)) * distance
-    //         rayPos.y += Math.sin(deg2rad(i)) * distance
-
-    //     }
-
-    //     ctx.strokeStyle = "white"
-    //     ctx.beginPath()
-    //     ctx.moveTo(camera.x * scaleX + xOffset, camera.y * scaleY + yOffset)
-    //     ctx.lineTo(rayPos.x * scaleX + xOffset, rayPos.y * scaleY + yOffset)
-    //     ctx.stroke()
+        ctx.strokeStyle = "white"
+        ctx.beginPath()
+        ctx.moveTo(camera.x * scaleX + xOffset, camera.y * scaleY + yOffset)
+        ctx.lineTo(rayPos.x * scaleX + xOffset, rayPos.y * scaleY + yOffset)
+        ctx.stroke()
         
-    // }
+    }
 
 }
 
@@ -373,7 +317,7 @@ canvas.addEventListener('mouseup', e => {
 
 function main() {
 
-    //draw()
+    draw()
 
     //offset+=1/10
 
