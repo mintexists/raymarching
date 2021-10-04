@@ -1,4 +1,16 @@
 <canvas width="200px" height="200px" id="canvas" style="width: 1000px; image-rendering: pixelated"></canvas>
 <div id="frametime"></div>
 
-<script src="index.js"></script>
+<script src='https://requirejs.org/docs/release/2.3.6/minified/require.js' ></script>
+
+<!--<script src="index.js" type="module"></script>-->
+
+<script>
+    function load() {
+        require(['parallel', 'index'], function (foo) {
+            //foo is now loaded.
+        });
+
+    }
+    window.onload = load
+</script>

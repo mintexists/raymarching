@@ -23,7 +23,8 @@ let normalize = (vector) => {
 let rotate = (pos, yaw, pitch) => {
     let newYaw = new Position(pos.x * Math.cos(deg2rad(yaw)) - pos.y * Math.sin(deg2rad(yaw)) + 0, pos.x * Math.sin(deg2rad(yaw)) + pos.y * Math.cos(deg2rad(yaw)) + 0, 0 + 0 + 1);
     let newPitch = new Position(1 + 0 + 0, 0 + newYaw.y * Math.cos(deg2rad(pitch)) - newYaw.z * Math.sin(deg2rad(pitch)), 0 + newYaw.y * Math.sin(deg2rad(pitch)) + newYaw.z * Math.cos(deg2rad(pitch)));
-    return newPitch;
+    //return newPitch
+    return pos;
 };
 function sMin(a, b, k) {
     let h = Math.max(k - Math.abs(a - b), 0) / k;
@@ -186,10 +187,14 @@ let objects = [];
 objects.push(new Sphere(new Position(80, 0, 0), 30));
 objects.push(new Sphere(new Position(80, 0, 80), 30));
 objects.push(new Sphere(new Position(80, 80, 80), 30));
-let pixel = (x, y, shade) => {
-    ctx.fillStyle = `rgb(${shade * 255}, ${shade * 255}, ${shade * 255})`;
-    ctx.fillRect(x, y, 1, 1);
-};
+// var slowSquare = function (n) { 
+//     var i = 0; 
+//     while (++i < n * n) {}
+//     return i;
+// };
+// new Parallel(10000).spawn(slowSquare).then(function (data) {
+//     console.log(data)
+// });
 let camera = new Position(0, 0, 0);
 let imagedata = ctx.createImageData(canvas.width, canvas.height);
 function draw() {
@@ -274,8 +279,8 @@ function draw() {
     //     ctx.stroke()
     // }
 }
-let frameTimes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-for (let i = 0; i < 100; i++) {
+let frameTimes = [];
+for (let i = 0; i < 10; i++) {
     frameTimes.push(0);
 }
 function main() {

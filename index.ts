@@ -49,7 +49,8 @@ let rotate = (pos: Position, yaw: number, pitch: number) => {
         0 + newYaw.y * Math.sin(deg2rad(pitch)) + newYaw.z * Math.cos(deg2rad(pitch))
     )
 
-    return newPitch
+    //return newPitch
+    return pos
 }
 
 function sMin(a: number, b: number, k: number) {
@@ -228,12 +229,15 @@ objects.push(new Sphere(new Position(80,0,80), 30))
 objects.push(new Sphere(new Position(80,80,80), 30))
 
 
+// var slowSquare = function (n) { 
+//     var i = 0; 
+//     while (++i < n * n) {}
+//     return i;
+// };
 
-
-let pixel = (x: number, y: number, shade: number) => {
-    ctx.fillStyle = `rgb(${shade*255}, ${shade*255}, ${shade*255})`
-    ctx.fillRect( x, y, 1, 1 );
-}
+// new Parallel(10000).spawn(slowSquare).then(function (data) {
+//     console.log(data)
+// });
 
 let camera = new Position(0,0,0)
 
@@ -361,9 +365,9 @@ function draw() {
 
 }  
 
-let frameTimes: Array<Number> = [0,0,0,0,0,0,0,0,0,0]
+let frameTimes: Array<Number> = []
 
-for (let i = 0; i < 100; i++) {
+for (let i = 0; i < 10; i++) {
     frameTimes.push(0)
 }
 
