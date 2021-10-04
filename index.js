@@ -4,12 +4,27 @@ let scaleX = 1;
 let scaleY = 1;
 let xOffset = canvas.width / 2;
 let yOffset = canvas.height / 2;
-let minStep = 1 / 10;
+let minStep = 1 / 100;
 let maxDistance = 500;
+let fov = 1;
+let yaw = 0;
+let pitch = 0;
 let mouseDown = false;
 let rad2deg = (rad) => (180 / Math.PI) * rad;
 let deg2rad = (deg) => deg * (Math.PI / 180);
-let pythag = (pos1, pos2) => Math.sqrt(Math.pow((pos1.x - pos2.x), 2) + Math.pow((pos1.y - pos2.y), 2) + Math.pow((pos1.z - pos2.z), 2));
+let pythag = (pos1, pos2) => Math.hypot(pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z); //Math.sqrt((pos1.x-pos2.x)**2 + (pos1.y-pos2.y)**2 + (pos1.z-pos2.z)**2)
+let dot = (pos1, pos2) => pos1.x * pos2.x + pos1.y * pos2.y + pos1.z * pos2.z;
+const average = (array) => array.reduce((a, b) => a + b) / array.length;
+let normalize = (vector) => {
+    let length = pythag(new Position(0, 0, 0), vector);
+    return new Position(vector.x / length, vector.y / length, vector.z / length);
+};
+// this isnt right
+let rotate = (pos, yaw, pitch) => {
+    let newYaw = new Position(pos.x * Math.cos(deg2rad(yaw)) - pos.y * Math.sin(deg2rad(yaw)) + 0, pos.x * Math.sin(deg2rad(yaw)) + pos.y * Math.cos(deg2rad(yaw)) + 0, 0 + 0 + 1);
+    let newPitch = new Position(1 + 0 + 0, 0 + newYaw.y * Math.cos(deg2rad(pitch)) - newYaw.z * Math.sin(deg2rad(pitch)), 0 + newYaw.y * Math.sin(deg2rad(pitch)) + newYaw.z * Math.cos(deg2rad(pitch)));
+    return newPitch;
+};
 function sMin(a, b, k) {
     let h = Math.max(k - Math.abs(a - b), 0) / k;
     return Math.min(a, b) - h * h * k * (1 / 4);
@@ -168,71 +183,54 @@ class Onion {
     }
 }*/
 let objects = [];
-objects.push(new Sphere(new Position(40, 0, 0), 30));
-// objects.push(new Circle(new Position(-40, 0), 1))
-//objects.push(new Rectangle(new Position(30,10), 20, 10))
-//objects.push(new Triangle(new Position(0,0), new Position(10,10), new Position(10,0)))
-// objects.push(new Line(new Position(0,0), new Position(10,10)))
-//objects.push(new Rectangle(new Position(20, 0), 20, 10))
-//objects.push(new Rectangle(new Position(20, 20), 20, 10, 0))
-// objects.push(new Circle(new Position(30,0), 20))
-// objects.push(new Subtract(new Circle(new Position(30,0), 15), new Onion(new Rectangle(new Position(20, 0), 20, 10, 20), 2)))
-// objects.push(
-//     new Union(
-//         new Subtract(
-//             new Rectangle(new Position(0,0), 20, 20, 45),
-//             new Rectangle(new Position(0,14.14), 28.28, 28.28)
-//         ),
-//         new Union(
-//             new Intersect(
-//                 new Circle(new Position(-7.07, 0), 7.07),
-//                 new Rectangle(new Position(0,7.07), 30, 30, 45),
-//             ),
-//             new Intersect(
-//                 new Circle(new Position(7.07, 0), 7.07),
-//                 new Rectangle(new Position(0,7.07), 30, 30, 45),
-//             ),
-//         )
-//     )
-// )
+objects.push(new Sphere(new Position(80, 0, 0), 30));
+objects.push(new Sphere(new Position(80, 0, 80), 30));
+objects.push(new Sphere(new Position(80, 80, 80), 30));
 let pixel = (x, y, shade) => {
     ctx.fillStyle = `rgb(${shade * 255}, ${shade * 255}, ${shade * 255})`;
     ctx.fillRect(x, y, 1, 1);
 };
 let camera = new Position(0, 0, 0);
+let imagedata = ctx.createImageData(canvas.width, canvas.height);
 function draw() {
     ctx.fillStyle = "black";
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    for (let x = 0; x < canvas.width; x++) {
-        for (let y = 0; y < canvas.height; y++) {
-            let fov = 1;
+    for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
             let distance = minStep;
             let totalDistance = 0;
             let rayPos = new Position(camera.x, camera.y, camera.z);
-            //  x = left+right
-            //  y = up+down
-            //  z = forward+back
-            let vector = new Position((x / canvas.width), (y / canvas.width), 1);
+            //let vector = new Position(2, ((y/canvas.height) - .5) * 2, ((x/canvas.width) - .5) * 2)
+            let vector = rotate(normalize(new Position(1, ((y / canvas.height) - .5) * 2, ((x / canvas.width) - .5) * 2)), yaw, 0);
+            let normal;
             while (true) {
                 if (totalDistance > maxDistance || distance < minStep) {
                     break;
                 }
                 let distances = [];
                 objects.forEach(object => {
-                    distances.push(object.distance(rayPos));
+                    normal = new Position(rayPos.x - object.position.x, rayPos.y - object.position.y, rayPos.z - object.position.z);
+                    distances.push(Math.min(object.distance(rayPos)));
                 });
                 distance = Math.min(...distances);
                 totalDistance += distance;
-                //rayPos.x += (x / 1000) * distance
-                //rayPos.y += (x / 1000) * distance
                 rayPos.x += vector.x * distance;
                 rayPos.y += vector.y * distance;
                 rayPos.z += vector.z * distance;
             }
-            pixel(x, y, distance / maxDistance);
+            let shade = 0;
+            if (distance < minStep) {
+                shade = 1; //1 - Math.abs(dot(normalize(rayPos), normalize(normal))*2)
+            }
+            let pixelindex = ((canvas.width - y) * canvas.width + x) * 4;
+            imagedata.data[pixelindex] = shade * 255;
+            imagedata.data[pixelindex + 1] = shade * 255;
+            imagedata.data[pixelindex + 2] = shade * 255;
+            imagedata.data[pixelindex + 3] = 255;
         }
     }
+    ctx.putImageData(imagedata, 0, 0);
     // ctx.fillStyle = "black"
     // ctx.clearRect(0,0,canvas.width,canvas.height)
     // ctx.fillRect(0,0,canvas.width,canvas.height)
@@ -276,33 +274,16 @@ function draw() {
     //     ctx.stroke()
     // }
 }
-function getMousePos(evt) {
-    var rect = canvas.getBoundingClientRect();
-    return {
-        x: evt.clientX - rect.left,
-        y: evt.clientY - rect.top
-    };
+let frameTimes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+for (let i = 0; i < 100; i++) {
+    frameTimes.push(0);
 }
-canvas.addEventListener('mousedown', e => {
-    camera.x = (e.offsetX - xOffset) / scaleX;
-    camera.y = (e.offsetY - yOffset) / scaleY;
-    mouseDown = true;
-});
-canvas.addEventListener('mousemove', e => {
-    if (mouseDown == true) {
-        camera.x = (e.offsetX - xOffset) / scaleX;
-        camera.y = (e.offsetY - yOffset) / scaleY;
-    }
-});
-canvas.addEventListener('mouseup', e => {
-    if (mouseDown == true) {
-        camera.x = (e.offsetX - xOffset) / scaleX;
-        camera.y = (e.offsetY - yOffset) / scaleY;
-        mouseDown = false;
-    }
-});
 function main() {
-    //draw()
+    let time = performance.now();
+    draw();
+    frameTimes.push(performance.now() - time);
+    frameTimes.shift();
+    document.getElementById("frametime").innerText = (1 / (average(frameTimes)) * 100).toString();
     //offset+=1/10
     window.requestAnimationFrame(main);
 }
