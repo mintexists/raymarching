@@ -21,10 +21,10 @@ let normalize = (vector) => {
 };
 // this isnt right
 let rotate = (pos, yaw, pitch) => {
-    let newYaw = new Position(pos.x * Math.cos(deg2rad(yaw)) - pos.y * Math.sin(deg2rad(yaw)) + 0, pos.x * Math.sin(deg2rad(yaw)) + pos.y * Math.cos(deg2rad(yaw)) + 0, 0 + 0 + 1);
-    let newPitch = new Position(1 + 0 + 0, 0 + newYaw.y * Math.cos(deg2rad(pitch)) - newYaw.z * Math.sin(deg2rad(pitch)), 0 + newYaw.y * Math.sin(deg2rad(pitch)) + newYaw.z * Math.cos(deg2rad(pitch)));
-    //return newPitch
-    return pos;
+    let newYaw = new Position(pos.x * Math.cos(deg2rad(yaw)) + 0 + pos.z * Math.sin(deg2rad(yaw)), 0 + pos.y + 0, pos.x * -Math.sin(deg2rad(yaw)) + 0 + pos.z * Math.cos(deg2rad(yaw)));
+    let newPitch = new Position(newYaw.x * Math.cos(deg2rad(pitch)) + newYaw.y * -Math.sin(deg2rad(pitch)) + 0, newYaw.x * Math.sin(deg2rad(pitch)) + newYaw.y * Math.cos(deg2rad(pitch)) + 0, 0 + 0 + newYaw.z);
+    // return pos
+    return newPitch;
 };
 function sMin(a, b, k) {
     let h = Math.max(k - Math.abs(a - b), 0) / k;
@@ -185,8 +185,8 @@ class Onion {
 }*/
 let objects = [];
 objects.push(new Sphere(new Position(80, 0, 0), 30));
+objects.push(new Sphere(new Position(0, 0, 80), 30));
 objects.push(new Sphere(new Position(80, 0, 80), 30));
-objects.push(new Sphere(new Position(80, 80, 80), 30));
 // var slowSquare = function (n) { 
 //     var i = 0; 
 //     while (++i < n * n) {}
@@ -207,7 +207,7 @@ function draw() {
             let totalDistance = 0;
             let rayPos = new Position(camera.x, camera.y, camera.z);
             //let vector = new Position(2, ((y/canvas.height) - .5) * 2, ((x/canvas.width) - .5) * 2)
-            let vector = rotate(normalize(new Position(1, ((y / canvas.height) - .5) * 2, ((x / canvas.width) - .5) * 2)), yaw, 0);
+            let vector = normalize(rotate(new Position(1, ((y / canvas.height) - .5) * 2, ((x / canvas.width) - .5) * 2), yaw, pitch));
             let normal;
             while (true) {
                 if (totalDistance > maxDistance || distance < minStep) {

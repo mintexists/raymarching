@@ -37,20 +37,21 @@ let normalize = (vector: Position) => {
 
 // this isnt right
 let rotate = (pos: Position, yaw: number, pitch: number) => {
+
     let newYaw = new Position(
-        pos.x * Math.cos(deg2rad(yaw)) - pos.y * Math.sin(deg2rad(yaw)) + 0,
-        pos.x * Math.sin(deg2rad(yaw)) +  pos.y * Math.cos(deg2rad(yaw)) + 0,
-        0 + 0 + 1
+        pos.x *  Math.cos(deg2rad(yaw)) + 0 + pos.z * Math.sin(deg2rad(yaw)),
+        0 + pos.y + 0,
+        pos.x * -Math.sin(deg2rad(yaw)) + 0 + pos.z * Math.cos(deg2rad(yaw)),
     )
 
     let newPitch = new Position(
-        1 + 0 + 0,
-        0 + newYaw.y * Math.cos(deg2rad(pitch)) - newYaw.z * Math.sin(deg2rad(pitch)),
-        0 + newYaw.y * Math.sin(deg2rad(pitch)) + newYaw.z * Math.cos(deg2rad(pitch))
+        newYaw.x *  Math.cos(deg2rad(pitch)) + newYaw.y * -Math.sin(deg2rad(pitch)) + 0,
+        newYaw.x *  Math.sin(deg2rad(pitch)) + newYaw.y *  Math.cos(deg2rad(pitch)) + 0,
+        0 + 0 + newYaw.z
     )
 
-    //return newPitch
-    return pos
+    // return pos
+    return newPitch
 }
 
 function sMin(a: number, b: number, k: number) {
@@ -224,9 +225,9 @@ let objects = []
 
 objects.push(new Sphere(new Position(80,0,0), 30))
 
-objects.push(new Sphere(new Position(80,0,80), 30))
+objects.push(new Sphere(new Position(0,0,80), 30))
 
-objects.push(new Sphere(new Position(80,80,80), 30))
+objects.push(new Sphere(new Position(80,0,80), 30))
 
 
 // var slowSquare = function (n) { 
@@ -259,7 +260,7 @@ function draw() {
 
             //let vector = new Position(2, ((y/canvas.height) - .5) * 2, ((x/canvas.width) - .5) * 2)
 
-            let vector = rotate(normalize(new Position(1, ((y/canvas.height) - .5) * 2, ((x/canvas.width) - .5) * 2)), yaw, 0)
+            let vector = normalize(rotate(new Position(1, ((y/canvas.height) - .5) * 2, ((x/canvas.width) - .5) * 2), yaw, pitch))
 
             let normal: Position
 
