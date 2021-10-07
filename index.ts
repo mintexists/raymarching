@@ -1,98 +1,69 @@
 let canvas = document.getElementById("canvas") as HTMLCanvasElement
 let ctx = canvas.getContext("2d")
 
-let chunks = 2
-let chunkW = canvas.width / chunks
-let chunkH = canvas.height / chunks
+let chunkCount = 2
+let chunkW = canvas.width / chunkCount
+let chunkH = canvas.height / chunkCount
 
-let pixels0 = new ImageData(chunkW, chunkH);
-let pixels1 = new ImageData(chunkW, chunkH);
-let pixels2 = new ImageData(chunkW, chunkH);
-let pixels3 = new ImageData(chunkW, chunkH);
+class Chunk {
+    pixels: ImageData
+    ready: boolean
+    worker: Worker
+    x: number
+    y: number
+    constructor(x, y, worker = "worker.js") {
+        this.x = x * chunkW
+        this.y = y * chunkH
+        this.ready = true
+        this.worker = new Worker(worker)
+        this.pixels = new ImageData(chunkW, chunkH)
 
-let ready = 0
+        this.worker.addEventListener("message", (evt) => {
+            this.pixels.data.set(evt.data.bytes)
+            this.ready = true
+        })
+    }
 
-let worker0 = new Worker("worker.js")
+    postMessage(data) {
+        this.worker.postMessage(data)
+    }
 
-worker0.addEventListener( 'message', ( evt ) => {
-    pixels0.data.set( evt.data.bytes );    
-    ready++
-    //ctx.putImageData( pixels0, 0 * chunkW, 0 * chunkH);
-});
-
-let worker1 = new Worker("worker.js")
-
-worker1.addEventListener( 'message', ( evt ) => {
-    pixels1.data.set( evt.data.bytes );    
-    ready++
-    //ctx.putImageData( pixels1, 1 * chunkW, 0 * chunkH);
-});
-
-let worker2 = new Worker("worker.js")
-
-worker2.addEventListener( 'message', ( evt ) => {
-    pixels2.data.set( evt.data.bytes );    
-    ready++
-    //ctx.putImageData( pixels2, 0 * chunkW, 1 * chunkH);
-});
-
-let worker3 = new Worker("worker.js")
-
-worker3.addEventListener( 'message', ( evt ) => {
-    pixels3.data.set( evt.data.bytes );    
-    ready++
-    //ctx.putImageData( pixels3, 1 * chunkW, 1 * chunkH);
-});
-
-function work() {
-    // let imageData0 = ctx.getImageData(0 * chunkW, 0 * chunkH, chunkW, chunkH)
-    worker0.postMessage( {
-        // pixels: pixel.data.buffer,
-        width: chunkW,
-        height: chunkH,
-        channels: 4
-    })//, [imageData0.data.buffer] )
-
-    // let imageData1 = ctx.getImageData(1 * chunkW, 0 * chunkH, chunkW, chunkH)
-    worker1.postMessage( {
-        // pixels: imageData1.data.buffer,
-        width: chunkW,
-        height: chunkH,
-        channels: 4
-    })//, [imageData1.data.buffer] )
-    
-
-    // let imageData2 = ctx.getImageData(0 * chunkW, 1 * chunkH, chunkW, chunkH)
-    worker2.postMessage( {
-        // pixels: imageData2.data.buffer,
-        width: chunkW,
-        height: chunkH,
-        channels: 4
-    })//, [imageData2.data.buffer] )
-
-    // let imageData3 = ctx.getImageData(1 * chunkW, 1 * chunkH, chunkW, chunkH)
-    worker3.postMessage( {
-        // pixels: imageData3.data.buffer,
-        width: chunkW,
-        height: chunkH,
-        channels: 4
-    })//, [imageData3.data.buffer] )
+    getPixels() {
+        this.ready = false
+        return this.pixels
+    }
 }
 
+let chunks: Array<Chunk> = []
+
+
+
+for (let y = 0; y < chunkCount; y++) {
+    for (let x = 0; x < chunkCount; x++) {
+        chunks.push(new Chunk(x,y))
+    }
+}
+
+
+let checkReady = (chunk) => chunk.ready
+
 function draw() {
-    if (ready == 4) {
-        ctx.putImageData( pixels0, 0 * chunkW, 0 * chunkH);
-        ctx.putImageData( pixels1, 1 * chunkW, 0 * chunkH);
-        ctx.putImageData( pixels2, 0 * chunkW, 1 * chunkH);
-        ctx.putImageData( pixels3, 1 * chunkW, 1 * chunkH);
-        ready = 0
-        work()
+    if (chunks.every(checkReady)) {
+        chunks.forEach((chunk) => {
+
+            ctx.putImageData(chunk.getPixels(), chunk.x, chunk.y)
+
+            chunk.postMessage({
+                width: chunkW,
+                height: chunkH,
+                channels: 4
+            })
+        })
     }
     window.requestAnimationFrame(draw)
 }
 
 function main() {
-    work()
     draw()
 }
 
