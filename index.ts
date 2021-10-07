@@ -5,41 +5,46 @@ let chunks = 2
 let chunkW = canvas.width / chunks
 let chunkH = canvas.height / chunks
 
-let worker0 = new Worker("worker.js")
-
 let pixels0 = new ImageData(chunkW, chunkH);
 let pixels1 = new ImageData(chunkW, chunkH);
 let pixels2 = new ImageData(chunkW, chunkH);
 let pixels3 = new ImageData(chunkW, chunkH);
 
+let ready = 0
+
+let worker0 = new Worker("worker.js")
 
 worker0.addEventListener( 'message', ( evt ) => {
     pixels0.data.set( evt.data.bytes );    
-    ctx.putImageData( pixels0, 0 * chunkW, 0 * chunkH);
+    ready++
+    //ctx.putImageData( pixels0, 0 * chunkW, 0 * chunkH);
 });
 
 let worker1 = new Worker("worker.js")
 
 worker1.addEventListener( 'message', ( evt ) => {
     pixels1.data.set( evt.data.bytes );    
-    ctx.putImageData( pixels1, 1 * chunkW, 0 * chunkH);
+    ready++
+    //ctx.putImageData( pixels1, 1 * chunkW, 0 * chunkH);
 });
 
 let worker2 = new Worker("worker.js")
 
 worker2.addEventListener( 'message', ( evt ) => {
     pixels2.data.set( evt.data.bytes );    
-    ctx.putImageData( pixels2, 0 * chunkW, 1 * chunkH);
+    ready++
+    //ctx.putImageData( pixels2, 0 * chunkW, 1 * chunkH);
 });
 
 let worker3 = new Worker("worker.js")
 
 worker3.addEventListener( 'message', ( evt ) => {
     pixels3.data.set( evt.data.bytes );    
-    ctx.putImageData( pixels3, 1 * chunkW, 1 * chunkH);
+    ready++
+    //ctx.putImageData( pixels3, 1 * chunkW, 1 * chunkH);
 });
 
-function draw() {
+function work() {
     // let imageData0 = ctx.getImageData(0 * chunkW, 0 * chunkH, chunkW, chunkH)
     worker0.postMessage( {
         // pixels: pixel.data.buffer,
@@ -74,9 +79,21 @@ function draw() {
     })//, [imageData3.data.buffer] )
 }
 
+function draw() {
+    if (ready == 4) {
+        ctx.putImageData( pixels0, 0 * chunkW, 0 * chunkH);
+        ctx.putImageData( pixels1, 1 * chunkW, 0 * chunkH);
+        ctx.putImageData( pixels2, 0 * chunkW, 1 * chunkH);
+        ctx.putImageData( pixels3, 1 * chunkW, 1 * chunkH);
+        ready = 0
+        work()
+    }
+    window.requestAnimationFrame(draw)
+}
+
 function main() {
+    work()
     draw()
-    window.requestAnimationFrame(main)
 }
 
 main()
