@@ -1,7 +1,12 @@
 const _self = self as DedicatedWorkerGlobalScope;
 
+let img: ImageData
+
 _self.addEventListener( 'message', ( evt ) => {
-    let img = new ImageData( evt.data.width, evt.data.height );
+
+    if (!img) {
+        img = new ImageData( evt.data.width, evt.data.height );
+    }   
 
     for( let x = 0; x < img.data.length; x += evt.data.channels ) {
         img.data[x] = Math.random()*255;
