@@ -2,6 +2,8 @@ const _self = self as DedicatedWorkerGlobalScope;
 
 let img: ImageData
 
+let chunkCount = Math.floor(Math.sqrt(navigator.hardwareConcurrency)) || 2
+
 class Position {
     x: number
     y: number
@@ -63,14 +65,19 @@ enum ShapeType {
 let sphereDist = (pos: Position, sphere) => pythag(pos, sphere.position) - sphere.radius
 
 let planeDist = (pos: Position, plane) => {
-    return dot(localize(pos, plane.position), plane.angle) + plane.h
+    return dot(localize(pos, plane.position), normalize(plane.angle)) + plane.h
 }
 
-let minStep = 1/10
+let minStep = 1/100
 let maxDistance = 500
+let maxSteps = 200
 let fov = 1
 
 _self.addEventListener( 'message', ( evt ) => {
+
+    if (chunkCount != evt.data.chunkCount) {
+        chunkCount = evt.data.chunkCount
+    }
 
     // console.log(sphereDist(evt.data.camera, evt.data.objects[0]))
     // console.log(planeDist(evt.data.camera, evt.data.objects[1]))
@@ -84,14 +91,15 @@ _self.addEventListener( 'message', ( evt ) => {
 
             let totalDistance = 0
             let distance = minStep
+            let steps = 0
 
             let rayPos = new Position(evt.data.camera.x, evt.data.camera.y, evt.data.camera.z)
             
-            let vector = rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / 2) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / 2) - .5) * fov), evt.data.yaw, evt.data.pitch)
+            let vector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch))
             
             while (true) {
 
-                if (totalDistance > maxDistance || distance < minStep) {
+                if (totalDistance > maxDistance || distance < minStep || steps > maxSteps) {
                     break
                 }
 
@@ -118,14 +126,18 @@ _self.addEventListener( 'message', ( evt ) => {
                 rayPos.y += vector.y * distance
                 rayPos.z += vector.z * distance
 
+                steps++
+
             }
 
+            //let pixelindex = 4 * (x + y * img.width)
             let pixelindex = (y * evt.data.width + x) * 4
 
             let shade = 0//(((x + evt.data.x) / (evt.data.width) / 4) + ((y + evt.data.y) / (evt.data.height) / 4))
 
             if (distance < minStep) {
-                shade = (distance * (1/minStep))
+                // shade = (distance * (1/minStep))
+                shade = (1 - steps/maxSteps) ** 2
             }
 
             img.data[pixelindex] = shade*255
