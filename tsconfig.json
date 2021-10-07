@@ -9,6 +9,6 @@
         ],
 
     },
-    "exclude": ["Old/*"],
+    "exclude": ["Old/*", "worker/worker.ts"],
     "files": ["index.ts"],
 }

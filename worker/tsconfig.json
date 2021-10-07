@@ -1,7 +1,9 @@
 {
-    "extends": "./tsconfig",
+    "extends": "../tsconfig",
     "compilerOptions": {
-        "lib": ["WebWorker", "es6"]
+        "lib": ["webworker", "ES2015"],
+        "outDir": "../",
+        "module": "es6"
     },
-    "files": ["worker.js"]
+    "files": ["worker.ts"]
 }
