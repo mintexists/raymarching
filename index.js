@@ -290,7 +290,7 @@ document.addEventListener('keyup', (e) => {
     }
 });
 for (let i = 0; i < 8; i++) {
-    document.getElementById(i.toString()).addEventListener("mousedown", function () {
+    document.getElementById(i.toString()).addEventListener("pointerdown", function () {
         console.log(this.id);
         switch (parseInt(this.id)) {
             case 0:
@@ -321,7 +321,7 @@ for (let i = 0; i < 8; i++) {
                 break;
         }
     });
-    document.getElementById(i.toString()).addEventListener("mouseup", function () {
+    document.getElementById(i.toString()).addEventListener("pointerup", function () {
         console.log(this.id);
         switch (parseInt(this.id)) {
             case 0:
