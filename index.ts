@@ -1,7 +1,7 @@
 let canvas = document.getElementById("canvas") as HTMLCanvasElement
 let ctx = canvas.getContext("2d")
 
-let res = 100
+let res = 500
 
 function closestMultiple(n, x) {
     if (x > n) return x
@@ -127,6 +127,7 @@ enum ShapeType {
     plane,
     box,
     torus,
+    mandlebulb,
 }
 
 let objects: any = [
@@ -150,13 +151,17 @@ let objects: any = [
     //     b: new Position(1,1,1),
     //     color: {r: 255, b: 168, g: 237},
     // },
+    // {
+    //     type: ShapeType.torus,
+    //     position: new Position(5,0,0),
+    //     angle: {roll: 45, pitch: 0, yaw: 0 },
+    //     minor: .5,//new Position(1,1,0),
+    //     major: 1,
+    //     color: {r: 255, b: 168, g: 237},
+    // },
     {
-        type: ShapeType.torus,
+        type: ShapeType.mandlebulb,
         position: new Position(5,0,0),
-        angle: {roll: 45, pitch: 0, yaw: 0 },
-        minor: .5,//new Position(1,1,0),
-        major: 1,
-        color: {r: 255, b: 168, g: 237},
     },
     // {
     //     type: ShapeType.sphere,
@@ -274,7 +279,7 @@ function main() {
     window.requestAnimationFrame(main)
 }
 
-main()
+//main()
 
 document.addEventListener('keydown', (e) => {
     switch (e.key.toLowerCase()) {
@@ -292,15 +297,19 @@ document.addEventListener('keydown', (e) => {
             break;
         case "arrowdown":
             keys.down = true
+            e.preventDefault();
             break
         case "arrowup":
             keys.up = true
+            e.preventDefault();
             break
         case "arrowleft":
             keys.left = true
+            e.preventDefault();
             break
         case "arrowright":
             keys.right = true
+            e.preventDefault();
             break
         case "shift":
             keys.shift = true
@@ -310,6 +319,7 @@ document.addEventListener('keydown', (e) => {
             break
         case " ":
             keys.space = true
+            e.preventDefault();
             break
         default:
             break;
@@ -332,15 +342,19 @@ document.addEventListener('keyup', (e) => {
             break;
         case "arrowdown":
             keys.down = false
+            e.preventDefault();
             break
         case "arrowup":
             keys.up = false
+            e.preventDefault();
             break
         case "arrowleft":
             keys.left = false
+            e.preventDefault();
             break
         case "arrowright":
             keys.right = false
+            e.preventDefault();
             break
         case "shift":
             keys.shift = false
@@ -350,6 +364,7 @@ document.addEventListener('keyup', (e) => {
             break
         case " ":
             keys.space = false
+            e.preventDefault();
             break
         default:
             break;
@@ -358,7 +373,6 @@ document.addEventListener('keyup', (e) => {
 
 for (let i = 0; i < 8; i++) {
     document.getElementById(i.toString()).addEventListener("pointerdown", function() {
-        console.log(this.id)
         switch (parseInt(this.id)) {
             case 0:
                 keys.w = true
@@ -389,7 +403,6 @@ for (let i = 0; i < 8; i++) {
         }
     });
     document.getElementById(i.toString()).addEventListener("pointerup", function() {
-        console.log(this.id)
         switch (parseInt(this.id)) {
             case 0:
                 keys.w = false

@@ -37,6 +37,7 @@ var ShapeType;
     ShapeType[ShapeType["plane"] = 1] = "plane";
     ShapeType[ShapeType["box"] = 2] = "box";
     ShapeType[ShapeType["torus"] = 3] = "torus";
+    ShapeType[ShapeType["mandlebulb"] = 4] = "mandlebulb";
 })(ShapeType || (ShapeType = {}));
 let sphereDist = (pos, sphere) => pythag(pos, sphere.position) - sphere.radius;
 let planeDist = (pos, plane) => {
@@ -56,6 +57,34 @@ let torusDist = (pos, torus) => {
     let p = rotate(localize(pos, torus.position), torus.angle.yaw, torus.angle.pitch, torus.angle.roll);
     let q = new Position(pythag(new Position(p.x, 0, p.z)) - torus.major, p.y, 0);
     return pythag(q) - torus.minor;
+};
+let mandlebulbDist = (pos, mandlebulb) => {
+    let iterations = 10;
+    let maxBulbDist = 10000;
+    let power = 3;
+    if (!mandlebulb.angle) {
+        mandlebulb.angle = { roll: 0, pitch: 0, yaw: 0 };
+    }
+    let z = pos; //rotate(localize(pos, mandlebulb.position), mandlebulb.angle.yaw, mandlebulb.angle.pitch, mandlebulb.angle.roll)
+    let dr = 1;
+    let r = 0;
+    for (let i = 0; i < iterations; i++) {
+        r = pythag(z);
+        if (r > maxBulbDist) {
+            break;
+        }
+        let theta = Math.acos(z.z / r);
+        let phi = Math.atan2(z.y, z.x);
+        dr = Math.pow(r, power - 1) * power * dr + 1;
+        let zr = Math.pow(r, power);
+        theta = theta * power;
+        phi = phi * power;
+        z = new Position(zr * Math.sin(theta) * Math.cos(phi), zr * Math.sin(phi) * Math.sin(theta), zr * Math.cos(theta));
+        z.x += pos.x;
+        z.y += pos.y;
+        z.z += pos.z;
+    }
+    return 0.5 * Math.log(r) * r / dr;
 };
 let minStep = 1 / 100;
 let maxDistance = 500;
@@ -96,6 +125,9 @@ _self.addEventListener('message', (evt) => {
                             break;
                         case ShapeType.torus:
                             obj.distance = Math.abs(torusDist(rayPos, obj));
+                            break;
+                        case ShapeType.mandlebulb:
+                            obj.distance = Math.abs(mandlebulbDist(rayPos, obj));
                             break;
                         default:
                             break;
