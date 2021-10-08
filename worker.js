@@ -24,6 +24,7 @@ let normalize = (vector) => {
     return new Position(vector.x / length, vector.y / length, vector.z / length);
 };
 let dot = (pos1, pos2) => pos1.x * pos2.x + pos1.y * pos2.y + pos1.z * pos2.z;
+let cross = (pos1, pos2) => new Position((pos1.y * pos2.z) - (pos1.z * pos2.y), (pos1.z * pos2.x) - (pos1.x * pos2.z), (pos1.x * pos2.y) - (pos1.y * pos2.x));
 let rotate = (pos, yaw, pitch) => {
     let newPitch = new Position(pos.x * Math.cos(deg2rad(pitch)) + pos.y * -Math.sin(deg2rad(pitch)) + 0, pos.x * Math.sin(deg2rad(pitch)) + pos.y * Math.cos(deg2rad(pitch)) + 0, 0 + 0 + pos.z);
     let newYaw = new Position(newPitch.x * Math.cos(deg2rad(yaw)) + 0 + newPitch.z * Math.sin(deg2rad(yaw)), 0 + newPitch.y + 0, newPitch.x * -Math.sin(deg2rad(yaw)) + 0 + newPitch.z * Math.cos(deg2rad(yaw)));
@@ -33,10 +34,15 @@ var ShapeType;
 (function (ShapeType) {
     ShapeType[ShapeType["sphere"] = 0] = "sphere";
     ShapeType[ShapeType["plane"] = 1] = "plane";
+    ShapeType[ShapeType["box"] = 2] = "box";
 })(ShapeType || (ShapeType = {}));
 let sphereDist = (pos, sphere) => pythag(pos, sphere.position) - sphere.radius;
 let planeDist = (pos, plane) => {
     return dot(localize(pos, plane.position), normalize(plane.angle)) + plane.h;
+};
+let boxDist = (pos, box) => {
+    let p = localize(pos, box.position);
+    return Math.max(Math.abs(p.x) - box.b.x, Math.abs(p.y) - box.b.y, Math.abs(p.z) - box.b.z);
 };
 let minStep = 1 / 100;
 let maxDistance = 500;
@@ -71,6 +77,8 @@ _self.addEventListener('message', (evt) => {
                         case ShapeType.plane:
                             distances.push(Math.abs(planeDist(rayPos, object)));
                             break;
+                        case ShapeType.box:
+                            distances.push(Math.abs(boxDist(rayPos, object)));
                         default:
                             break;
                     }

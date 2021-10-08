@@ -8,6 +8,7 @@ function closestMultiple(n, x) {
     n = n - (n % x);
     return n;
 }
+let dumpPos = () => console.log(`camera.x = ${camera.x}; camera.y = ${camera.y}; camera.z = ${camera.z}; yaw = ${yaw}; pitch = ${pitch}`);
 let chunkCount = Math.floor(Math.sqrt(navigator.hardwareConcurrency)) || 2;
 let chunkRes = closestMultiple(res, chunkCount) / chunkCount;
 canvas.width = chunkCount * chunkRes;
@@ -83,28 +84,40 @@ var ShapeType;
 (function (ShapeType) {
     ShapeType[ShapeType["sphere"] = 0] = "sphere";
     ShapeType[ShapeType["plane"] = 1] = "plane";
+    ShapeType[ShapeType["box"] = 2] = "box";
 })(ShapeType || (ShapeType = {}));
 let objects = [
+    // {
+    //     type: ShapeType.plane,
+    //     position: new Position(20,0,1),
+    //     angle: new Position(0,1,0),
+    //     h: 1,
+    // },
+    // {
+    //     type: ShapeType.sphere,
+    //     position: new Position(0,0,0),
+    //     radius: 50,
+    // },
     {
-        type: ShapeType.plane,
-        position: new Position(20, 0, 1),
-        angle: new Position(0, 1, 0),
-        h: 1,
+        type: ShapeType.box,
+        position: new Position(5, 0, 0),
+        angle: new Position(1, 1, 1),
+        b: new Position(1, 1, 1)
     },
     {
         type: ShapeType.sphere,
-        position: new Position(0, 0, 0),
-        radius: 50,
+        position: new Position(5, 0, 0),
+        radius: 1,
     },
 ];
-for (let i = 0; i < 360; i += 10) {
-    //objects.push(new Sphere(new Position(20 * Math.cos(deg2rad(i)),0, 20 * Math.sin(deg2rad(i))), 1))
-    objects.push({
-        type: ShapeType.sphere,
-        position: new Position(20 * Math.cos(deg2rad(i)), 0, 20 * Math.sin(deg2rad(i))),
-        radius: 1,
-    });
-}
+// for (let i = 0; i < 360; i+=10) {
+//     //objects.push(new Sphere(new Position(20 * Math.cos(deg2rad(i)),0, 20 * Math.sin(deg2rad(i))), 1))
+//     objects.push({
+//         type: ShapeType.sphere,
+//         position: new Position(20 * Math.cos(deg2rad(i)),0,20 * Math.sin(deg2rad(i))),
+//         radius: 1,
+//     })
+// }
 let pitch = 0;
 let yaw = 0;
 let camera = new Position(0, 0, 0);

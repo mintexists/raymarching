@@ -40,6 +40,12 @@ let normalize = (vector: Position) => {
 
 let dot = (pos1: Position, pos2: Position) => pos1.x * pos2.x + pos1.y * pos2.y + pos1.z * pos2.z
 
+let cross = (pos1: Position, pos2: Position) => new Position(
+    (pos1.y*pos2.z) - (pos1.z*pos2.y), 
+    (pos1.z*pos2.x) - (pos1.x*pos2.z), 
+    (pos1.x*pos2.y) - (pos1.y*pos2.x),
+)
+
 let rotate = (pos: Position, yaw: number, pitch: number) => {
 
     let newPitch = new Position(
@@ -60,12 +66,20 @@ let rotate = (pos: Position, yaw: number, pitch: number) => {
 enum ShapeType {
     sphere,
     plane,
+    box,
 }
+
 
 let sphereDist = (pos: Position, sphere) => pythag(pos, sphere.position) - sphere.radius
 
 let planeDist = (pos: Position, plane) => {
     return dot(localize(pos, plane.position), normalize(plane.angle)) + plane.h
+}
+
+let boxDist = (pos: Position, box) => {
+    let p = localize(pos, box.position)
+    
+    return Math.max(Math.abs(p.x) - box.b.x, Math.abs(p.y) - box.b.y, Math.abs(p.z) - box.b.z)
 }
 
 let minStep = 1/100
@@ -113,6 +127,8 @@ _self.addEventListener( 'message', ( evt ) => {
                         case ShapeType.plane:
                             distances.push(Math.abs(planeDist(rayPos, object)))
                             break;
+                        case ShapeType.box:
+                            distances.push(Math.abs(boxDist(rayPos, object)))
                         default:
                             break;
                     }

@@ -10,6 +10,8 @@ function closestMultiple(n, x) {
     return n;
 }
 
+let dumpPos = () => console.log(`camera.x = ${camera.x}; camera.y = ${camera.y}; camera.z = ${camera.z}; yaw = ${yaw}; pitch = ${pitch}`)
+
 let chunkCount = Math.floor(Math.sqrt(navigator.hardwareConcurrency)) || 2
 
 let chunkRes = closestMultiple(res, chunkCount) / chunkCount
@@ -123,30 +125,42 @@ let normalize = (vector: Position) => {
 enum ShapeType {
     sphere,
     plane,
+    box,
 }
 
-let objects = [
+let objects: any = [
+    // {
+    //     type: ShapeType.plane,
+    //     position: new Position(20,0,1),
+    //     angle: new Position(0,1,0),
+    //     h: 1,
+    // },
+    // {
+    //     type: ShapeType.sphere,
+    //     position: new Position(0,0,0),
+    //     radius: 50,
+    // },
     {
-        type: ShapeType.plane,
-        position: new Position(20,0,1),
-        angle: new Position(0,1,0),
-        h: 1,
+        type: ShapeType.box,
+        position: new Position(5,0,0),
+        angle: new Position(1,1,1),
+        b: new Position(1,1,1)
     },
     {
         type: ShapeType.sphere,
-        position: new Position(0,0,0),
-        radius: 50,
+        position: new Position(5,0,0),
+        radius: 1,
     },
 ]
 
-for (let i = 0; i < 360; i+=10) {
-    //objects.push(new Sphere(new Position(20 * Math.cos(deg2rad(i)),0, 20 * Math.sin(deg2rad(i))), 1))
-    objects.push({
-        type: ShapeType.sphere,
-        position: new Position(20 * Math.cos(deg2rad(i)),0,20 * Math.sin(deg2rad(i))),
-        radius: 1,
-    })
-}
+// for (let i = 0; i < 360; i+=10) {
+//     //objects.push(new Sphere(new Position(20 * Math.cos(deg2rad(i)),0, 20 * Math.sin(deg2rad(i))), 1))
+//     objects.push({
+//         type: ShapeType.sphere,
+//         position: new Position(20 * Math.cos(deg2rad(i)),0,20 * Math.sin(deg2rad(i))),
+//         radius: 1,
+//     })
+// }
 
 
 let pitch = 0
