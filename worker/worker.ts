@@ -46,12 +46,30 @@ let cross = (pos1: Position, pos2: Position) => new Position(
     (pos1.x*pos2.y) - (pos1.y*pos2.x),
 )
 
-let rotate = (pos: Position, yaw: number, pitch: number) => {
+let rotate = (pos: Position, yaw: number = 0, pitch: number = 0, roll: number = 0) => {
+
+    // let roll = deg2rad(pitchDeg)
+    // let pitch = deg2rad(rollDeg)
+    // let yaw = deg2rad(yawDeg)
+
+    // Roll: X, Pitch: Z, Yaw: Y
+
+    // let rotated = new Position(
+    //     (pos.x * (Math.cos(pitch) * Math.cos(yaw))) + (pos.y * (Math.cos(pitch) * Math.sin(yaw) * Math.sin(roll) - Math.sin(pitch) * Math.cos(roll))) + (pos.z * (Math.cos(pitch) * Math.sin(yaw) * Math.cos(roll) + Math.sin(pitch) * Math.sin(yaw))),
+    //     (pos.x * (Math.sin(pitch) * Math.cos(yaw))) + (pos.y * (Math.sin(pitch) * Math.sin(yaw) * Math.sin(roll) - Math.cos(pitch) * Math.cos(roll))) + (pos.z * (Math.sin(pitch) * Math.sin(yaw) * Math.cos(roll) + Math.cos(pitch) * Math.sin(yaw))),
+    //     (pos.x * (-Math.sin(yaw)))                  + (pos.y * (Math.cos(yaw) * Math.sin(roll)))                                                      + (pos.z * (Math.cos(yaw) * Math.cos(roll)))
+    // )
+
+    let newRoll = new Position(
+        pos.x + 0 + 0,
+        0 + pos.y * Math.cos(deg2rad(roll)) + pos.z * -Math.sin(deg2rad(roll)),
+        0 + pos.y * Math.sin(deg2rad(roll)) + pos.z * Math.cos(deg2rad(roll)),
+    )
 
     let newPitch = new Position(
-        pos.x *  Math.cos(deg2rad(pitch)) + pos.y * -Math.sin(deg2rad(pitch)) + 0,
-        pos.x *  Math.sin(deg2rad(pitch)) + pos.y *  Math.cos(deg2rad(pitch)) + 0,
-        0 + 0 + pos.z
+        newRoll.x *  Math.cos(deg2rad(pitch)) + newRoll.y * -Math.sin(deg2rad(pitch)) + 0,
+        newRoll.x *  Math.sin(deg2rad(pitch)) + newRoll.y *  Math.cos(deg2rad(pitch)) + 0,
+        0 + 0 + newRoll.z
     )
 
     let newYaw = new Position(
@@ -59,6 +77,8 @@ let rotate = (pos: Position, yaw: number, pitch: number) => {
         0 + newPitch.y + 0,
         newPitch.x * -Math.sin(deg2rad(yaw)) + 0 + newPitch.z * Math.cos(deg2rad(yaw)),
     )
+
+    // return newYaw
 
     return newYaw
 } 
@@ -111,7 +131,7 @@ _self.addEventListener( 'message', ( evt ) => {
 
             let rayPos = new Position(evt.data.camera.x, evt.data.camera.y, evt.data.camera.z)
             
-            let vector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch))
+            let vector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll))
             
             while (true) {
 
@@ -142,25 +162,6 @@ _self.addEventListener( 'message', ( evt ) => {
 
                 })
 
-                // let distances: Array<number> = []
-
-                // evt.data.objects.forEach(obj => {
-                //     switch (obj.type) {
-                //         case ShapeType.sphere:
-                //             distances.push(Math.abs(sphereDist(rayPos, obj)))
-                //             break;
-                //         case ShapeType.plane:
-                //             distances.push(Math.abs(planeDist(rayPos, obj)))
-                //             break;
-                //         case ShapeType.box:
-                //             distances.push(Math.abs(boxDist(rayPos, obj)))
-                //         default:
-                //             break;
-                //     }
-                // });
-
-                // distance = Math.min(...distances)
-
                 totalDistance += distance
 
                 rayPos.x += vector.x * distance
@@ -178,15 +179,15 @@ _self.addEventListener( 'message', ( evt ) => {
 
             if (distance < minStep) {
                 // shade = (distance * (1/minStep))
-                shade = (1 - steps/maxSteps) ** 2
+                shade = ((1 - steps/maxSteps) ** 2) * 255
 
                 if (smallest.color == undefined) {
-                    smallest.color = {r: 1, g: 1, b: 1}
+                    smallest.color = {r: 255, g: 255, b: 255}
                 }
 
-                img.data[pixelindex]   = (shade - (1 - smallest.color.r)) * 255
-                img.data[pixelindex+1] = (shade - (1 - smallest.color.g)) * 255
-                img.data[pixelindex+2] = (shade - (1 - smallest.color.b)) * 255
+                img.data[pixelindex]   = (shade - (255 - smallest.color.r))
+                img.data[pixelindex+1] = (shade - (255 - smallest.color.b))
+                img.data[pixelindex+2] = (shade - (255 - smallest.color.g))
                 img.data[pixelindex+3] = 255
     
             } else {

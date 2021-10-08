@@ -1,6 +1,6 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
-let res = 100;
+let res = 500;
 function closestMultiple(n, x) {
     if (x > n)
         return x;
@@ -93,36 +93,36 @@ let objects = [
         angle: new Position(0, 1, 0),
         h: 1,
     },
-    {
-        type: ShapeType.box,
-        position: new Position(0, 0, 0),
-        angle: new Position(1, 1, 1),
-        b: new Position(50, 50, 50),
-        //color: {r: 0, b: 0, g: 0}
-    },
+    // {
+    //     type: ShapeType.box,
+    //     position: new Position(0,0,0),
+    //     angle: new Position(1,1,1),
+    //     b: new Position(50,50,50),
+    //     //color: {r: 0, b: 0, g: 0}
+    // },
     {
         type: ShapeType.box,
         position: new Position(5, 0, 0),
-        angle: new Position(1, 1, 1),
+        angle: { roll: 0, pitch: 45, yaw: 45 },
         b: new Position(1, 1, 1),
-        color: { r: 1, b: 0, g: 0 },
+        color: { r: 255, b: 168, g: 237 },
     },
-    {
-        type: ShapeType.sphere,
-        position: new Position(5, 0, 0),
-        radius: 1,
-        color: { r: 1, b: 1, g: 1 }
-    },
+    // {
+    //     type: ShapeType.sphere,
+    //     position: new Position(5,0,0),
+    //     radius: 1,
+    //     color: {r: 1, b: 1, g: 1}
+    // },
 ];
-for (let i = 0; i < 360; i += 10) {
-    //objects.push(new Sphere(new Position(20 * Math.cos(deg2rad(i)),0, 20 * Math.sin(deg2rad(i))), 1))
-    objects.push({
-        type: ShapeType.sphere,
-        position: new Position(20 * Math.cos(deg2rad(i)), 0, 20 * Math.sin(deg2rad(i))),
-        radius: 1,
-        color: { r: Math.random(), b: Math.random(), g: Math.random() }
-    });
-}
+// for (let i = 0; i < 360; i+=10) {
+//     objects.push({
+//         type: ShapeType.sphere,
+//         position: new Position(20 * Math.cos(deg2rad(i)),0,20 * Math.sin(deg2rad(i))),
+//         radius: 1,
+//         color: {r: Math.random(), b: Math.random(), g: Math.random()}
+//     })
+// }
+let roll = 0;
 let pitch = 0;
 let yaw = 0;
 let camera = new Position(0, 0, 0);
@@ -138,6 +138,7 @@ function draw() {
                 y: chunk.y,
                 pitch: pitch,
                 yaw: yaw,
+                roll: roll,
                 chunkCount: chunkCount,
                 channels: 4,
                 camera: camera,
