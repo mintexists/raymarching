@@ -1,6 +1,6 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
-let res = 500;
+let res = 50;
 function closestMultiple(n, x) {
     if (x > n)
         return x;
@@ -85,6 +85,7 @@ var ShapeType;
     ShapeType[ShapeType["sphere"] = 0] = "sphere";
     ShapeType[ShapeType["plane"] = 1] = "plane";
     ShapeType[ShapeType["box"] = 2] = "box";
+    ShapeType[ShapeType["torus"] = 3] = "torus";
 })(ShapeType || (ShapeType = {}));
 let objects = [
     {
@@ -100,11 +101,19 @@ let objects = [
     //     b: new Position(50,50,50),
     //     //color: {r: 0, b: 0, g: 0}
     // },
+    // {
+    //     type: ShapeType.box,
+    //     position: new Position(5,0,0),
+    //     //angle: {roll: 0, pitch: 0, yaw: 0 },
+    //     b: new Position(1,1,1),
+    //     color: {r: 255, b: 168, g: 237},
+    // },
     {
-        type: ShapeType.box,
+        type: ShapeType.torus,
         position: new Position(5, 0, 0),
-        angle: { roll: 0, pitch: 45, yaw: 45 },
-        b: new Position(1, 1, 1),
+        angle: { roll: 45, pitch: 0, yaw: 0 },
+        minor: .5,
+        major: 1,
         color: { r: 255, b: 168, g: 237 },
     },
     // {
@@ -280,4 +289,68 @@ document.addEventListener('keyup', (e) => {
             break;
     }
 });
+for (let i = 0; i < 8; i++) {
+    document.getElementById(i.toString()).addEventListener("mousedown", function () {
+        console.log(this.id);
+        switch (parseInt(this.id)) {
+            case 0:
+                keys.w = true;
+                break;
+            case 1:
+                keys.a = true;
+                break;
+            case 2:
+                keys.s = true;
+                break;
+            case 3:
+                keys.d = true;
+                break;
+            case 4:
+                keys.up = true;
+                break;
+            case 5:
+                keys.down = true;
+                break;
+            case 6:
+                keys.left = true;
+                break;
+            case 7:
+                keys.right = true;
+                break;
+            default:
+                break;
+        }
+    });
+    document.getElementById(i.toString()).addEventListener("mouseup", function () {
+        console.log(this.id);
+        switch (parseInt(this.id)) {
+            case 0:
+                keys.w = false;
+                break;
+            case 1:
+                keys.a = false;
+                break;
+            case 2:
+                keys.s = false;
+                break;
+            case 3:
+                keys.d = false;
+                break;
+            case 4:
+                keys.up = false;
+                break;
+            case 5:
+                keys.down = false;
+                break;
+            case 6:
+                keys.left = false;
+                break;
+            case 7:
+                keys.right = false;
+                break;
+            default:
+                break;
+        }
+    });
+}
 //# sourceMappingURL=index.js.map
