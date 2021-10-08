@@ -1,7 +1,7 @@
 let canvas = document.getElementById("canvas") as HTMLCanvasElement
 let ctx = canvas.getContext("2d")
 
-let res = 300
+let res = 100
 
 function closestMultiple(n, x) {
     if (x > n) return x
