@@ -1,6 +1,6 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
-let res = 50;
+let res = 300;
 function closestMultiple(n, x) {
     if (x > n)
         return x;
