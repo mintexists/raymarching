@@ -62,28 +62,48 @@ _self.addEventListener('message', (evt) => {
             let totalDistance = 0;
             let distance = minStep;
             let steps = 0;
+            let smallest;
             let rayPos = new Position(evt.data.camera.x, evt.data.camera.y, evt.data.camera.z);
             let vector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch));
             while (true) {
                 if (totalDistance > maxDistance || distance < minStep || steps > maxSteps) {
                     break;
                 }
-                let distances = [];
-                evt.data.objects.forEach(object => {
-                    switch (object.type) {
+                distance = maxDistance;
+                evt.data.objects.forEach(obj => {
+                    switch (obj.type) {
                         case ShapeType.sphere:
-                            distances.push(Math.abs(sphereDist(rayPos, object)));
+                            obj.distance = Math.abs(sphereDist(rayPos, obj));
                             break;
                         case ShapeType.plane:
-                            distances.push(Math.abs(planeDist(rayPos, object)));
+                            obj.distance = Math.abs(planeDist(rayPos, obj));
                             break;
                         case ShapeType.box:
-                            distances.push(Math.abs(boxDist(rayPos, object)));
+                            obj.distance = Math.abs(boxDist(rayPos, obj));
                         default:
                             break;
                     }
+                    if (obj.distance < distance) {
+                        distance = obj.distance;
+                        smallest = obj;
+                    }
                 });
-                distance = Math.min(...distances);
+                // let distances: Array<number> = []
+                // evt.data.objects.forEach(obj => {
+                //     switch (obj.type) {
+                //         case ShapeType.sphere:
+                //             distances.push(Math.abs(sphereDist(rayPos, obj)))
+                //             break;
+                //         case ShapeType.plane:
+                //             distances.push(Math.abs(planeDist(rayPos, obj)))
+                //             break;
+                //         case ShapeType.box:
+                //             distances.push(Math.abs(boxDist(rayPos, obj)))
+                //         default:
+                //             break;
+                //     }
+                // });
+                // distance = Math.min(...distances)
                 totalDistance += distance;
                 rayPos.x += vector.x * distance;
                 rayPos.y += vector.y * distance;
@@ -96,11 +116,20 @@ _self.addEventListener('message', (evt) => {
             if (distance < minStep) {
                 // shade = (distance * (1/minStep))
                 shade = Math.pow((1 - steps / maxSteps), 2);
+                if (smallest.color == undefined) {
+                    smallest.color = { r: 1, g: 1, b: 1 };
+                }
+                img.data[pixelindex] = (shade - (1 - smallest.color.r)) * 255;
+                img.data[pixelindex + 1] = (shade - (1 - smallest.color.g)) * 255;
+                img.data[pixelindex + 2] = (shade - (1 - smallest.color.b)) * 255;
+                img.data[pixelindex + 3] = 255;
             }
-            img.data[pixelindex] = shade * 255;
-            img.data[pixelindex + 1] = shade * 255;
-            img.data[pixelindex + 2] = shade * 255;
-            img.data[pixelindex + 3] = 255;
+            else {
+                img.data[pixelindex] = 0 * 255;
+                img.data[pixelindex + 1] = 0 * 255;
+                img.data[pixelindex + 2] = 0 * 255;
+                img.data[pixelindex + 3] = 255;
+            }
         }
     }
     let bytes = new Uint8ClampedArray(img.data);
