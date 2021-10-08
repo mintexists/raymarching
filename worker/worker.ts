@@ -94,17 +94,19 @@ let torusDist = (pos: Position, torus) => {
 }
 
 let mandlebulbDist = (pos: Position, mandlebulb) => {
-    let iterations = 10
-    let maxBulbDist = 10000
+    if (!mandlebulb.angle) {mandlebulb.angle = {roll: 0, pitch: 0, yaw: 0}}
+    pos = rotate(localize(mandlebulb.position, pos), mandlebulb.angle.yaw, mandlebulb.angle.pitch, mandlebulb.angle.roll)
+
+    let iterations  = 10**9//100 - pythag(Position.zero, pos)
+    let maxBulbDist = 10**9//pythag(Position.zero, pos) * 100
     let power = 3
 
-    if (!mandlebulb.angle) {mandlebulb.angle = {roll: 0, pitch: 0, yaw: 0}}
-    let z = pos//rotate(localize(pos, mandlebulb.position), mandlebulb.angle.yaw, mandlebulb.angle.pitch, mandlebulb.angle.roll)
+    let z = pos//rotate(/* localize(mandlebulb.position, pos) */pos, mandlebulb.angle.yaw, mandlebulb.angle.pitch, mandlebulb.angle.roll)
 
     let dr = 1
     let r = 0
 
-    for (let i = 0; i < iterations; i++) {
+    for (let it = 0; it < iterations; it++) {
         r = pythag(z)
         if (r > maxBulbDist) {
             break

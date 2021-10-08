@@ -1,7 +1,7 @@
 let canvas = document.getElementById("canvas") as HTMLCanvasElement
 let ctx = canvas.getContext("2d")
 
-let res = 500
+let res = 100
 
 function closestMultiple(n, x) {
     if (x > n) return x
@@ -131,12 +131,12 @@ enum ShapeType {
 }
 
 let objects: any = [
-    {
-        type: ShapeType.plane,
-        position: new Position(20,0,1),
-        angle: new Position(0,1,0),
-        h: 1,
-    },
+    // {
+    //     type: ShapeType.plane,
+    //     position: new Position(20,0,1),
+    //     angle: new Position(0,1,0),
+    //     h: 1,
+    // },
     // {
     //     type: ShapeType.box,
     //     position: new Position(0,0,0),
@@ -159,10 +159,11 @@ let objects: any = [
     //     major: 1,
     //     color: {r: 255, b: 168, g: 237},
     // },
-    {
-        type: ShapeType.mandlebulb,
-        position: new Position(5,0,0),
-    },
+    // {
+    //     type: ShapeType.mandlebulb,
+    //     position: new Position(10,0,0),
+    //     color: {r: 255, b: 168, g: 237},
+    // },
     // {
     //     type: ShapeType.sphere,
     //     position: new Position(5,0,0),
@@ -215,11 +216,22 @@ let rotSpeed  = .5
 let sprintSpeed = 2
 let sprinting = 1
 
+let chunkStats = document.getElementById("chunkStats")
+
+
 let move = Position.zero
 
 function main() {
 
     let delta = (performance.now() - time) / 1000
+
+    document.getElementById("frametime").innerHTML = delta.toString()
+
+    chunkStats.innerHTML = ""
+
+    chunks.forEach((chunk) => {
+        chunkStats.innerHTML += `Chunk: ${chunk.ready} `
+    })
 
     move.x=0;move.y=0;move.z=0;
 
@@ -279,7 +291,7 @@ function main() {
     window.requestAnimationFrame(main)
 }
 
-//main()
+main()
 
 document.addEventListener('keydown', (e) => {
     switch (e.key.toLowerCase()) {

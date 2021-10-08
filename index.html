@@ -1,22 +1,36 @@
-<canvas width="200px" height="200px" id="canvas" style="width: 1000px; image-rendering: pixelated;"></canvas>
+<canvas width="200px" height="200px" id="canvas" class="canvas"></canvas>
 <br><br>
-<button type="button" class="wasd w" id="0">W</button> 
-<button type="button" class="arrows up" id="4">^</button> <br>
-<button type="button" class="wasd a" id="1">A</button> 
-<button type="button" class="wasd d" id="3">D</button> 
-<button type="button" class="arrows right" id="7">></button>
-<button type="button" class="arrows left" id="6"><</button><br>
-<button type="button" class="wasd s" id="2">S</button>
-<button type="button" class="arrows down" id="5">v</button>
+<button type="button" class="b wasd w" id="0">W</button>
+<button type="button" class="b arrows up" id="4">^</button> <br>
+<button type="button" class="b wasd a" id="1">A</button>
+<button type="button" class="b wasd d" id="3">D</button>
+<button type="button" class="b arrows right" id="7">></button>
+<button type="button" class="b arrows left" id="6"><</button><br>
+<button type="button" class="b wasd s" id="2">S</button>
+<button type="button" class="b arrows down" id="5">v</button>
 
 
 
 
 <div id="frametime"></div>
+<div id="chunkStats"></div>
 
 <script src="index.js"></script>
 
 <style>
+
+    .canvas {
+        width: 100%;
+        height: auto;
+    }
+
+
+    @media only screen {
+        .b {
+            display: none;
+        }
+    }
+
     .body {
         -webkit-touch-callout: none;
         -webkit-user-select: none;
@@ -39,6 +53,7 @@
     }
     .a {
         margin-left: 0px;
+        margin-right: 0px;
     }
     .d {
         margin-left: 150px
