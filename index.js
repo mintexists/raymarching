@@ -55,7 +55,7 @@ for (let y = 0; y < chunkCount; y++) {
     }
 }
 class Position {
-    constructor(x, y, z) {
+    constructor(x, y, z = 0) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -83,18 +83,25 @@ let normalize = (vector) => {
 var ShapeType;
 (function (ShapeType) {
     ShapeType[ShapeType["sphere"] = 0] = "sphere";
-    ShapeType[ShapeType["plane"] = 1] = "plane";
+    ShapeType[ShapeType["infPlane"] = 1] = "infPlane";
     ShapeType[ShapeType["box"] = 2] = "box";
     ShapeType[ShapeType["torus"] = 3] = "torus";
     ShapeType[ShapeType["mandlebulb"] = 4] = "mandlebulb";
+    ShapeType[ShapeType["plane"] = 5] = "plane";
+    ShapeType[ShapeType["subtract"] = 6] = "subtract";
+    ShapeType[ShapeType["union"] = 7] = "union";
+    ShapeType[ShapeType["intersect"] = 8] = "intersect";
+    ShapeType[ShapeType["infinite"] = 9] = "infinite";
 })(ShapeType || (ShapeType = {}));
 let objects = [
-    // {
-    //     type: ShapeType.plane,
-    //     position: new Position(20,0,1),
-    //     angle: new Position(0,1,0),
-    //     h: 1,
-    // },
+    // #region Shapes
+    {
+        type: ShapeType.infPlane,
+        position: new Position(0, 0, 0),
+        angle: new Position(0, 1, 0),
+        h: .5,
+        color: { r: 181, g: 208, b: 224 },
+    },
     // {
     //     type: ShapeType.box,
     //     position: new Position(0,0,0),
@@ -102,13 +109,69 @@ let objects = [
     //     b: new Position(50,50,50),
     //     //color: {r: 0, b: 0, g: 0}
     // },
-    {
-        type: ShapeType.box,
-        position: new Position(5, 0, 0),
-        //angle: {roll: 0, pitch: 0, yaw: 0 },
-        b: new Position(1, 1, 1),
-        color: { r: 255, b: 168, g: 237 },
-    },
+    // {
+    //     type: ShapeType.box,
+    //     position: new Position(5,0,0),
+    //     //angle: {roll: 0, pitch: 0, yaw: 0 },
+    //     b: new Position(1,1,1),
+    //     color: {r: 255, b: 168, g: 237},
+    // },
+    // {
+    //     type: ShapeType.plane,
+    //     position: new Position(5,-1,0),
+    //     //angle: {roll: 0, pitch: 0, yaw: 0 },
+    //     b: new Position(50,50),
+    //     color: {r: 255, b: 168, g: 237},
+    // },
+    //
+    // {
+    //     type: ShapeType.subtract,
+    //     subtractor: {
+    //         type: ShapeType.sphere,
+    //         position: new Position(5,.5,-3),
+    //         radius: 1,
+    //         color: {r: 1, b: 1, g: 1}
+    //     },
+    //     subtractee: {
+    //         type: ShapeType.box,
+    //         position: new Position(5,0,-3),
+    //         //angle: {roll: 0, pitch: 0, yaw: 0 
+    //         b: new Position(1,1,1),
+    //         color: {r: 255, b: 168, g: 237},
+    //     },
+    // },
+    // {
+    //     type: ShapeType.union,
+    //     first: {
+    //         type: ShapeType.sphere,
+    //         position: new Position(5,.5,0),
+    //         radius: 1,
+    //         color: {r: 1, b: 1, g: 1}
+    //     },
+    //     second: {
+    //         type: ShapeType.box,
+    //         position: new Position(5,0,0),
+    //         //angle: {roll: 0, pitch: 0, yaw: 0 
+    //         b: new Position(1,1,1),
+    //         color: {r: 255, b: 168, g: 237},
+    //     },
+    // },
+    // {
+    //     type: ShapeType.intersect,
+    //     first: {
+    //         type: ShapeType.sphere,
+    //         position: new Position(5,.5,3),
+    //         radius: 1,
+    //         color: {r: 1, b: 1, g: 1}
+    //     },
+    //     second: {
+    //         type: ShapeType.box,
+    //         position: new Position(5,0,3),
+    //         //angle: {roll: 0, pitch: 0, yaw: 0 
+    //         b: new Position(1,1,1),
+    //         color: {r: 255, b: 168, g: 237},
+    //     },
+    // },
     // {
     //     type: ShapeType.torus,
     //     position: new Position(5,0,0),
@@ -128,20 +191,61 @@ let objects = [
     //     radius: 1,
     //     color: {r: 1, b: 1, g: 1}
     // },
+    {
+        type: ShapeType.infinite,
+        c: new Position(4, 0, 4),
+        object: {
+            type: ShapeType.torus,
+            position: new Position(0, 0, 0),
+            minor: .5,
+            major: 1,
+        },
+        color: { r: 245, g: 159, b: 192 },
+    },
+    {
+        type: ShapeType.infinite,
+        c: new Position(4, 0, 4),
+        object: {
+            type: ShapeType.subtract,
+            subtractor: {
+                type: ShapeType.torus,
+                position: new Position(0, 0, 0),
+                minor: .5,
+                major: 1,
+            },
+            subtractee: {
+                type: ShapeType.torus,
+                position: new Position(0, .1, 0),
+                minor: .5,
+                major: 1,
+            },
+        },
+        color: { r: 241, g: 209, b: 162 },
+    }
+    // {
+    //     type: ShapeType.infPlane,
+    //     position: new Position(0,0,0),
+    //     angle: new Position(0,1,0),
+    //     h: 1
+    // }
+    //  #endregion
 ];
-for (let i = 0; i < 360; i += 10) {
-    objects.push({
-        type: ShapeType.sphere,
-        position: new Position(20 * Math.cos(deg2rad(i)), 0, 20 * Math.sin(deg2rad(i))),
-        radius: 1,
-        color: { r: Math.random() * 255, b: Math.random() * 255, g: Math.random() * 255 }
-    });
-}
+// for (let i = 0; i < 360; i+=10) {
+//     objects.push({
+//         type: ShapeType.sphere,
+//         position: new Position(20 * Math.cos(deg2rad(i)),0,20 * Math.sin(deg2rad(i))),
+//         radius: Math.random() / 2 + .75,
+//         color: {r: Math.random() * 255, b: Math.random() * 255, g: Math.random() * 255}
+//     })
+// }
 let roll = 0;
 let pitch = 0;
 let yaw = 0;
 let camera = new Position(0, 0, 0);
 let time = performance.now();
+let framerates = [];
+let avgMax = 10;
+let arrAvg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
 function draw() {
     if (chunks.every((chunk) => chunk.ready)) {
         chunks.forEach((chunk) => {
@@ -160,6 +264,13 @@ function draw() {
                 objects: objects,
             });
         });
+        let delta = (performance.now() - time) / 1000;
+        framerates.push(1 / delta);
+        if (framerates.length > avgMax) {
+            framerates.shift();
+        }
+        document.getElementById("frametime").innerHTML = (Math.floor(arrAvg(framerates))).toString();
+        //document.getElementById("frametime").innerHTML = (Math.floor(1/((performance.now() - time) / 1000))).toString()
         time = performance.now();
     }
 }
@@ -171,7 +282,6 @@ let chunkStats = document.getElementById("chunkStats");
 let move = Position.zero;
 function main() {
     let delta = (performance.now() - time) / 1000;
-    document.getElementById("frametime").innerHTML = delta.toString();
     chunkStats.innerHTML = "%: ";
     chunks.forEach((chunk) => {
         chunkStats.innerHTML += `${chunk.ready ? "#" : ""}`;
@@ -345,7 +455,6 @@ for (let i = 0; i < 10; i++) {
                 keys.ctrl = true;
                 break;
             default:
-                console.log(this.id);
                 break;
         }
     });
@@ -382,7 +491,6 @@ for (let i = 0; i < 10; i++) {
                 keys.ctrl = false;
                 break;
             default:
-                console.log(this.id);
                 break;
         }
     });
@@ -419,9 +527,46 @@ for (let i = 0; i < 10; i++) {
                 keys.ctrl = false;
                 break;
             default:
-                console.log(this.id);
                 break;
         }
     });
 }
+window.addEventListener('blur', function (ev) {
+    for (let i = 0; i < 10; i++) {
+        switch (i) {
+            case 0:
+                keys.w = false;
+                break;
+            case 1:
+                keys.a = false;
+                break;
+            case 2:
+                keys.s = false;
+                break;
+            case 3:
+                keys.d = false;
+                break;
+            case 4:
+                keys.up = false;
+                break;
+            case 5:
+                keys.down = false;
+                break;
+            case 6:
+                keys.left = false;
+                break;
+            case 7:
+                keys.right = false;
+                break;
+            case 8:
+                keys.space = false;
+                break;
+            case 9:
+                keys.ctrl = false;
+                break;
+            default:
+                break;
+        }
+    }
+});
 //# sourceMappingURL=index.js.map

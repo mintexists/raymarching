@@ -34,13 +34,18 @@ let rotate = (pos, yaw = 0, pitch = 0, roll = 0) => {
 var ShapeType;
 (function (ShapeType) {
     ShapeType[ShapeType["sphere"] = 0] = "sphere";
-    ShapeType[ShapeType["plane"] = 1] = "plane";
+    ShapeType[ShapeType["infPlane"] = 1] = "infPlane";
     ShapeType[ShapeType["box"] = 2] = "box";
     ShapeType[ShapeType["torus"] = 3] = "torus";
     ShapeType[ShapeType["mandlebulb"] = 4] = "mandlebulb";
+    ShapeType[ShapeType["plane"] = 5] = "plane";
+    ShapeType[ShapeType["subtract"] = 6] = "subtract";
+    ShapeType[ShapeType["union"] = 7] = "union";
+    ShapeType[ShapeType["intersect"] = 8] = "intersect";
+    ShapeType[ShapeType["infinite"] = 9] = "infinite";
 })(ShapeType || (ShapeType = {}));
 let sphereDist = (pos, sphere) => pythag(pos, sphere.position) - sphere.radius;
-let planeDist = (pos, plane) => {
+let infPlaneDist = (pos, plane) => {
     return dot(localize(pos, plane.position), normalize(plane.angle)) + plane.h;
 };
 let boxDist = (pos, box) => {
@@ -66,7 +71,7 @@ let mandlebulbDist = (pos, mandlebulb) => {
     let iterations = Math.pow(10, 9); //100 - pythag(Position.zero, pos)
     let maxBulbDist = Math.pow(10, 9); //pythag(Position.zero, pos) * 100
     let power = 3;
-    let z = pos; //rotate(/* localize(mandlebulb.position, pos) */pos, mandlebulb.angle.yaw, mandlebulb.angle.pitch, mandlebulb.angle.roll)
+    let z = pos;
     let dr = 1;
     let r = 0;
     for (let it = 0; it < iterations; it++) {
@@ -87,6 +92,71 @@ let mandlebulbDist = (pos, mandlebulb) => {
     }
     return 0.5 * Math.log(r) * r / dr;
 };
+let planeDist = (pos, plane) => {
+    if (!plane.angle) {
+        plane.angle = { roll: 0, pitch: 0, yaw: 0 };
+    }
+    let p = rotate(localize(pos, plane.position), plane.angle.yaw, plane.angle.pitch, plane.angle.roll);
+    return Math.max(Math.abs(p.x) - plane.b.x, Math.abs(p.y), Math.abs(p.z) - plane.b.y);
+};
+let subtract = (pos, subtract) => {
+    calcDist(pos, subtract.subtractor);
+    calcDist(pos, subtract.subtractee);
+    return Math.max(-subtract.subtractor.distance, subtract.subtractee.distance);
+};
+let union = (pos, union) => {
+    calcDist(pos, union.first);
+    calcDist(pos, union.second);
+    return Math.min(union.first.distance, union.second.distance);
+};
+let intersect = (pos, intersect) => {
+    calcDist(pos, intersect.first);
+    calcDist(pos, intersect.second);
+    return Math.max(intersect.first.distance, intersect.second.distance);
+};
+let infinite = (pos, infinite) => {
+    let q = new Position((((Math.abs(pos.x) + 0.5 * infinite.c.x) % infinite.c.x) - 0.5 * infinite.c.x), (((Math.abs(pos.y) + 0.5 * infinite.c.y) % infinite.c.y) - 0.5 * infinite.c.y), (((Math.abs(pos.z) + 0.5 * infinite.c.z) % infinite.c.z) - 0.5 * infinite.c.z));
+    q.x = infinite.c.x == 0 ? pos.x : q.x;
+    q.y = infinite.c.y == 0 ? pos.y : q.y;
+    q.z = infinite.c.z == 0 ? pos.z : q.z;
+    calcDist(q, infinite.object);
+    return infinite.object.distance;
+};
+function calcDist(rayPos, obj) {
+    switch (obj.type) {
+        case ShapeType.sphere:
+            obj.distance = (sphereDist(rayPos, obj));
+            break;
+        case ShapeType.infPlane:
+            obj.distance = (infPlaneDist(rayPos, obj));
+            break;
+        case ShapeType.box:
+            obj.distance = (boxDist(rayPos, obj));
+            break;
+        case ShapeType.torus:
+            obj.distance = (torusDist(rayPos, obj));
+            break;
+        case ShapeType.mandlebulb:
+            obj.distance = (mandlebulbDist(rayPos, obj));
+            break;
+        case ShapeType.plane:
+            obj.distance = (planeDist(rayPos, obj));
+            break;
+        case ShapeType.subtract:
+            obj.distance = (subtract(rayPos, obj));
+            break;
+        case ShapeType.union:
+            obj.distance = (union(rayPos, obj));
+            break;
+        case ShapeType.intersect:
+            obj.distance = (intersect(rayPos, obj));
+            break;
+        case ShapeType.infinite:
+            obj.distance = (infinite(rayPos, obj));
+        default:
+            break;
+    }
+}
 let minStep = 1 / 100;
 let maxDistance = 500;
 let maxSteps = 200;
@@ -96,7 +166,7 @@ _self.addEventListener('message', (evt) => {
         chunkCount = evt.data.chunkCount;
     }
     // console.log(sphereDist(evt.data.camera, evt.data.objects[0]))
-    // console.log(planeDist(evt.data.camera, evt.data.objects[1]))
+    // console.log(infPlane(evt.data.camera, evt.data.objects[1]))
     if (!img) {
         img = new ImageData(evt.data.width, evt.data.height);
     }
@@ -114,25 +184,7 @@ _self.addEventListener('message', (evt) => {
                 }
                 distance = maxDistance;
                 evt.data.objects.forEach(obj => {
-                    switch (obj.type) {
-                        case ShapeType.sphere:
-                            obj.distance = Math.abs(sphereDist(rayPos, obj));
-                            break;
-                        case ShapeType.plane:
-                            obj.distance = Math.abs(planeDist(rayPos, obj));
-                            break;
-                        case ShapeType.box:
-                            obj.distance = Math.abs(boxDist(rayPos, obj));
-                            break;
-                        case ShapeType.torus:
-                            obj.distance = Math.abs(torusDist(rayPos, obj));
-                            break;
-                        case ShapeType.mandlebulb:
-                            obj.distance = Math.abs(mandlebulbDist(rayPos, obj));
-                            break;
-                        default:
-                            break;
-                    }
+                    calcDist(rayPos, obj);
                     if (obj.distance < distance) {
                         distance = obj.distance;
                         smallest = obj;
