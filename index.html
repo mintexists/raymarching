@@ -1,27 +1,37 @@
 <canvas width="200px" height="200px" id="canvas" class="canvas"></canvas>
-<br><br>
 <button type="button" class="b wasd w" id="0">W</button>
-<button type="button" class="b arrows up" id="4">^</button> <br>
+<button type="button" class="b arrows up" id="4">^</button><br class="b">
 <button type="button" class="b wasd a" id="1">A</button>
+<button type="button" class="b wasd" id="9">O</button>
 <button type="button" class="b wasd d" id="3">D</button>
 <button type="button" class="b arrows right" id="7">></button>
-<button type="button" class="b arrows left" id="6"><</button><br>
+<button type="button" class="b arrows" id="8">X</button>
+<button type="button" class="b arrows left" id="6"><</button><br class="b">
 <button type="button" class="b wasd s" id="2">S</button>
 <button type="button" class="b arrows down" id="5">v</button>
 
-
+<br>
 
 
 <div id="frametime"></div>
 <div id="chunkStats"></div>
+<br>
 
 <script src="index.js"></script>
 
 <style>
 
+    br {
+        clear:both
+    }
+
     .canvas {
-        width: 100%;
-        height: auto;
+        width: 92vh;
+        max-width: 100vw;
+        image-rendering: pixelated;
+        display: block;
+        margin: 0;
+        padding: 0;
     }
 
     .b {
@@ -34,7 +44,13 @@
         }
     }
 
-    .body {
+    * {
+        touch-action: manipulation;
+        margin: 0;
+        padding: 0;
+    }
+
+    .b {
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         -khtml-user-select: none;
@@ -47,19 +63,14 @@
         width: 150px;
         height: 150px;
         padding: 0px;
+        float:left;
     }
+
     .w {
         margin-left: 150px;
     }
     .s {
         margin-left: 150px;
-    }
-    .a {
-        margin-left: 0px;
-        margin-right: 0px;
-    }
-    .d {
-        margin-left: 150px
     }
 
     .arrows {
@@ -74,11 +85,5 @@
     }
     .down {
         margin-right: 150px;
-    }
-    .left {
-        margin-right: 150px;
-    }
-    .right {
-        margin-right: 0px
     }
 </style>

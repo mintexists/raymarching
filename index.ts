@@ -144,13 +144,13 @@ let objects: any = [
     //     b: new Position(50,50,50),
     //     //color: {r: 0, b: 0, g: 0}
     // },
-    // {
-    //     type: ShapeType.box,
-    //     position: new Position(5,0,0),
-    //     //angle: {roll: 0, pitch: 0, yaw: 0 },
-    //     b: new Position(1,1,1),
-    //     color: {r: 255, b: 168, g: 237},
-    // },
+    {
+        type: ShapeType.box,
+        position: new Position(5,0,0),
+        //angle: {roll: 0, pitch: 0, yaw: 0 },
+        b: new Position(1,1,1),
+        color: {r: 255, b: 168, g: 237},
+    },
     // {
     //     type: ShapeType.torus,
     //     position: new Position(5,0,0),
@@ -172,14 +172,14 @@ let objects: any = [
     // },
 ]
 
-// for (let i = 0; i < 360; i+=10) {
-//     objects.push({
-//         type: ShapeType.sphere,
-//         position: new Position(20 * Math.cos(deg2rad(i)),0,20 * Math.sin(deg2rad(i))),
-//         radius: 1,
-//         color: {r: Math.random(), b: Math.random(), g: Math.random()}
-//     })
-// }
+for (let i = 0; i < 360; i+=10) {
+    objects.push({
+        type: ShapeType.sphere,
+        position: new Position(20 * Math.cos(deg2rad(i)),0,20 * Math.sin(deg2rad(i))),
+        radius: 1,
+        color: {r: Math.random() * 255, b: Math.random() * 255, g: Math.random() * 255}
+    })
+}
 
 let roll = 0
 let pitch = 0
@@ -227,10 +227,10 @@ function main() {
 
     document.getElementById("frametime").innerHTML = delta.toString()
 
-    chunkStats.innerHTML = ""
+    chunkStats.innerHTML = "%: "
 
     chunks.forEach((chunk) => {
-        chunkStats.innerHTML += `Chunk: ${chunk.ready} `
+        chunkStats.innerHTML += `${chunk.ready ? "#" : ""}`
     })
 
     move.x=0;move.y=0;move.z=0;
