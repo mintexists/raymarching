@@ -311,7 +311,7 @@ document.addEventListener('keyup', (e) => {
             break;
     }
 });
-for (let i = 0; i < 8; i++) {
+for (let i = 0; i < 10; i++) {
     document.getElementById(i.toString()).addEventListener("pointerdown", function () {
         switch (parseInt(this.id)) {
             case 0:
@@ -338,7 +338,14 @@ for (let i = 0; i < 8; i++) {
             case 7:
                 keys.right = true;
                 break;
+            case 8:
+                keys.space = true;
+                break;
+            case 9:
+                keys.ctrl = true;
+                break;
             default:
+                console.log(this.id);
                 break;
         }
     });
@@ -368,7 +375,51 @@ for (let i = 0; i < 8; i++) {
             case 7:
                 keys.right = false;
                 break;
+            case 8:
+                keys.space = false;
+                break;
+            case 9:
+                keys.ctrl = false;
+                break;
             default:
+                console.log(this.id);
+                break;
+        }
+    });
+    document.getElementById(i.toString()).addEventListener("pointerleave", function () {
+        switch (parseInt(this.id)) {
+            case 0:
+                keys.w = false;
+                break;
+            case 1:
+                keys.a = false;
+                break;
+            case 2:
+                keys.s = false;
+                break;
+            case 3:
+                keys.d = false;
+                break;
+            case 4:
+                keys.up = false;
+                break;
+            case 5:
+                keys.down = false;
+                break;
+            case 6:
+                keys.left = false;
+                break;
+            case 7:
+                keys.right = false;
+                break;
+            case 8:
+                keys.space = false;
+                break;
+            case 9:
+                keys.ctrl = false;
+                break;
+            default:
+                console.log(this.id);
                 break;
         }
     });
