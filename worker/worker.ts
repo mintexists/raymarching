@@ -76,6 +76,7 @@ enum ShapeType {
     union,
     intersect,
     infinite,
+    hexagonalPrism,
 }
 
 
@@ -139,36 +140,100 @@ let planeDist = (pos: Position, plane) => {
 let subtract = (pos: Position, subtract) => {
     calcDist(pos, subtract.subtractor)
     calcDist(pos, subtract.subtractee)
-    return Math.max(
+
+    let dist = Math.max(
         -subtract.subtractor.distance,
         subtract.subtractee.distance
     )
+    
+    if (!subtract.color) {
+        if ((-subtract.subtractor.distance) == dist) {
+            subtract.altColor = subtract.subtractor.color
+        } else if (subtract.subtractee.distance == dist) {
+            subtract.altColor = subtract.subtractee.color
+        }
+    }
+
+    return dist
 }
 
 let union = (pos: Position, union) => {
     calcDist(pos, union.first)
     calcDist(pos, union.second)
-    return Math.min(
+    let dist =  Math.min(
         union.first.distance,
         union.second.distance
     )
+
+    if (!union.color) {
+        if (union.first.distance == dist && union.first.color) {
+            union.altColor = union.first.color
+        } else if (union.second.distance == dist && union.second.color) {
+            union.altColor = union.second.color
+        }
+    }
+
+    return dist
 }
 
 let intersect = (pos: Position, intersect) => {
     calcDist(pos, intersect.first)
     calcDist(pos, intersect.second)
-    return Math.max(
+    let dist = Math.max(
         intersect.first.distance,
         intersect.second.distance
     )
+
+    if (!intersect.color) {
+        if (intersect.first.distance == dist && intersect.first.color) {
+            intersect.altColor = intersect.first.color
+        } else if (intersect.second.distance == dist && intersect.second.color) {
+            intersect.altColor = intersect.second.color
+        }
+    }
+
+    return dist
 }
 
+let hexagonalPrismDist = (pos: Position, hexagonal) => {
+    if (!hexagonal.angle) {hexagonal.angle = {roll: 0, pitch: 0, yaw: 0}}
+    let p = rotate(localize(pos, hexagonal.position), hexagonal.angle.yaw, hexagonal.angle.pitch, hexagonal.angle.roll)
+
+    //p = rotate(p, 0,0,0)
+
+    p.x = Math.abs(p.x)
+    p.z = Math.abs(p.z)
+    p.y = Math.abs(p.y)
+
+    //let k = normalize(new Position(0.57735, 0, 0.8660254))
+    let k = new Position(2/3,0,1)
+
+    let p1 = rotate(p, 60)
+
+    return Math.max(
+        p.x  - hexagonal.h.x * k.x,
+        p.z  - hexagonal.h.x * k.z,
+        p1.x - hexagonal.h.x * k.x,
+        p1.z - hexagonal.h.x * k.z,
+        p.y -  hexagonal.h.y,
+    )
+}
+ 
 let infinite = (pos: Position, infinite) => {
     let q = new Position((((Math.abs(pos.x) + 0.5 * infinite.c.x) % infinite.c.x)-0.5*infinite.c.x), (((Math.abs(pos.y) + 0.5 * infinite.c.y) % infinite.c.y)-0.5*infinite.c.y), (((Math.abs(pos.z) + 0.5 * infinite.c.z) % infinite.c.z)-0.5*infinite.c.z))
     q.x = infinite.c.x == 0 ? pos.x : q.x
     q.y = infinite.c.y == 0 ? pos.y : q.y
     q.z = infinite.c.z == 0 ? pos.z : q.z
     calcDist(q, infinite.object)
+
+    if (!infinite.color) {
+        if (infinite.object.color) {
+            infinite.altColor = infinite.object.color
+        } else if (infinite.object.altColor) {
+            infinite.altColor = infinite.object.altColor
+        }
+    }
+
     return infinite.object.distance
 }
 
@@ -203,6 +268,9 @@ function calcDist(rayPos, obj) {
             break
         case ShapeType.infinite:
             obj.distance = (infinite(rayPos, obj))
+            break
+        case ShapeType.hexagonalPrism:
+            obj.distance = (hexagonalPrismDist(rayPos, obj))
         default:
             break;
     }
@@ -274,14 +342,18 @@ _self.addEventListener( 'message', ( evt ) => {
             if (distance < minStep) {
                 // shade = (distance * (1/minStep))
                 shade = ((1 - steps/maxSteps) ** 2) * 255
+                
+                let color = {r: 255, g: 255, b: 255}
 
-                if (smallest.color == undefined) {
-                    smallest.color = {r: 255, g: 255, b: 255}
+                if (smallest.color != undefined) {
+                    color = smallest.color
+                } else if (smallest.altColor) {
+                    color = smallest.altColor
                 }
 
-                img.data[pixelindex]   = (shade - (255 - smallest.color.r))
-                img.data[pixelindex+1] = (shade - (255 - smallest.color.b))
-                img.data[pixelindex+2] = (shade - (255 - smallest.color.g))
+                img.data[pixelindex]   = (shade - (255 - color.r))
+                img.data[pixelindex+1] = (shade - (255 - color.g))
+                img.data[pixelindex+2] = (shade - (255 - color.b))
                 img.data[pixelindex+3] = 255
     
             } else {

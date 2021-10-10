@@ -92,16 +92,17 @@ var ShapeType;
     ShapeType[ShapeType["union"] = 7] = "union";
     ShapeType[ShapeType["intersect"] = 8] = "intersect";
     ShapeType[ShapeType["infinite"] = 9] = "infinite";
+    ShapeType[ShapeType["hexagonalPrism"] = 10] = "hexagonalPrism";
 })(ShapeType || (ShapeType = {}));
 let objects = [
     // #region Shapes
-    {
-        type: ShapeType.infPlane,
-        position: new Position(0, 0, 0),
-        angle: new Position(0, 1, 0),
-        h: .5,
-        color: { r: 181, g: 208, b: 224 },
-    },
+    // {
+    //     type: ShapeType.infPlane,
+    //     position: new Position(0,0,0),
+    //     angle: new Position(0,1,0),
+    //     h: .5,
+    //     color: {r: 181, g: 208, b: 224},
+    // },
     // {
     //     type: ShapeType.box,
     //     position: new Position(0,0,0),
@@ -199,8 +200,8 @@ let objects = [
             position: new Position(0, 0, 0),
             minor: .5,
             major: 1,
+            color: { r: 241, g: 209, b: 162 },
         },
-        color: { r: 245, g: 159, b: 192 },
     },
     {
         type: ShapeType.infinite,
@@ -212,16 +213,38 @@ let objects = [
                 position: new Position(0, 0, 0),
                 minor: .5,
                 major: 1,
+                color: { r: 241, g: 209, b: 162 },
             },
             subtractee: {
                 type: ShapeType.torus,
                 position: new Position(0, .1, 0),
                 minor: .5,
                 major: 1,
+                color: { r: 245, g: 159, b: 192 },
             },
+            //color: {r: 0, g: 0, b: 255}
         },
-        color: { r: 241, g: 209, b: 162 },
     }
+    // {
+    //     type: ShapeType.hexagonalPrism,
+    //     position: new Position(0,0),
+    //     h: new Position(1,1),
+    //     color: {r: 255, g: 0, b: 0}
+    // },
+    // {
+    //     type: ShapeType.plane,
+    //     position: new Position(0,-1,0),
+    //     //angle: {roll: 0, pitch: 0, yaw: 0 },
+    //     b: new Position(1,1),
+    //     color: {r: 255, b: 168, g: 237},
+    // },
+    // {
+    //     type: ShapeType.plane,
+    //     position: new Position(1,0,0),
+    //     angle: {roll: 0, pitch: 90, yaw: 0 },
+    //     b: new Position(1,1),
+    //     color: {r: 255, b: 168, g: 237},
+    // },
     // {
     //     type: ShapeType.infPlane,
     //     position: new Position(0,0,0),
