@@ -138,12 +138,9 @@ let planeDist = (pos: Position, plane) => {
 }
 
 let subtract = (pos: Position, subtract) => {
-    calcDist(pos, subtract.subtractor)
-    calcDist(pos, subtract.subtractee)
-
     let dist = Math.max(
-        -subtract.subtractor.distance,
-        subtract.subtractee.distance
+        -calcDist(pos, subtract.subtractor),
+         calcDist(pos, subtract.subtractee)
     )
     
     if (!subtract.color) {
@@ -158,11 +155,9 @@ let subtract = (pos: Position, subtract) => {
 }
 
 let union = (pos: Position, union) => {
-    calcDist(pos, union.first)
-    calcDist(pos, union.second)
     let dist =  Math.min(
-        union.first.distance,
-        union.second.distance
+        calcDist(pos, union.first),
+        calcDist(pos, union.second)
     )
 
     if (!union.color) {
@@ -177,11 +172,9 @@ let union = (pos: Position, union) => {
 }
 
 let intersect = (pos: Position, intersect) => {
-    calcDist(pos, intersect.first)
-    calcDist(pos, intersect.second)
     let dist = Math.max(
-        intersect.first.distance,
-        intersect.second.distance
+        calcDist(pos, intersect.first),
+        calcDist(pos, intersect.second)
     )
 
     if (!intersect.color) {
@@ -224,7 +217,6 @@ let infinite = (pos: Position, infinite) => {
     q.x = infinite.c.x == 0 ? pos.x : q.x
     q.y = infinite.c.y == 0 ? pos.y : q.y
     q.z = infinite.c.z == 0 ? pos.z : q.z
-    calcDist(q, infinite.object)
 
     if (!infinite.color) {
         if (infinite.object.color) {
@@ -234,10 +226,10 @@ let infinite = (pos: Position, infinite) => {
         }
     }
 
-    return infinite.object.distance
+    return calcDist(q, infinite.object)
 }
 
-function calcDist(rayPos, obj) {
+let calcDist = (rayPos: Position, obj) => {
     switch (obj.type) {
         case ShapeType.sphere:
             obj.distance = (sphereDist(rayPos, obj))
@@ -274,6 +266,23 @@ function calcDist(rayPos, obj) {
         default:
             break;
     }
+    return obj.distance
+}
+
+let calcNormal = (p: Position, obj) => {
+    let eps = 0.0001
+    let h = new Position(eps, 0, 0)
+    let xyyP = new Position(p.x + h.x, p.y + h.y, p.z + h.x)
+    let xyyM = new Position(p.x - h.x, p.y - h.y, p.z - h.x)
+    let yxyP = new Position(p.x + h.y, p.y + h.x, p.z + h.y)
+    let yxyM = new Position(p.x - h.y, p.y - h.x, p.z - h.y)
+    let yyxP = new Position(p.x + h.y, p.y + h.y, p.z + h.x)
+    let yyxM = new Position(p.x - h.y, p.y - h.y, p.z - h.x)
+    return normalize(new Position(
+        calcDist(xyyP, obj) - calcDist(xyyM, obj),
+        calcDist(yxyP, obj) - calcDist(yxyM, obj),
+        calcDist(yyxP, obj) - calcDist(yyxM, obj),
+    ))
 }
 
 let minStep = 1/100
@@ -318,8 +327,8 @@ _self.addEventListener( 'message', ( evt ) => {
                 evt.data.objects.forEach(obj => {
                     calcDist(rayPos, obj) 
 
-                    if (obj.distance < distance) {
-                        distance = obj.distance
+                    if (Math.abs(obj.distance) < distance) {
+                        distance = Math.abs(obj.distance)
                         smallest = obj
                     }
                 })
@@ -350,6 +359,11 @@ _self.addEventListener( 'message', ( evt ) => {
                 } else if (smallest.altColor) {
                     color = smallest.altColor
                 }
+
+                let normal = calcNormal(rayPos, smallest)
+                //color = {r: Math.abs(normal.x)*255, g: Math.abs(normal.y)*255, b: Math.abs(normal.z)*255}
+
+                //color = {r: normal.x*255, g: 0, b: 0}
 
                 img.data[pixelindex]   = (shade - (255 - color.r))
                 img.data[pixelindex+1] = (shade - (255 - color.g))

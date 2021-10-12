@@ -101,9 +101,7 @@ let planeDist = (pos, plane) => {
     return Math.max(Math.abs(p.x) - plane.b.x, Math.abs(p.y), Math.abs(p.z) - plane.b.y);
 };
 let subtract = (pos, subtract) => {
-    calcDist(pos, subtract.subtractor);
-    calcDist(pos, subtract.subtractee);
-    let dist = Math.max(-subtract.subtractor.distance, subtract.subtractee.distance);
+    let dist = Math.max(-calcDist(pos, subtract.subtractor), calcDist(pos, subtract.subtractee));
     if (!subtract.color) {
         if ((-subtract.subtractor.distance) == dist) {
             subtract.altColor = subtract.subtractor.color;
@@ -115,9 +113,7 @@ let subtract = (pos, subtract) => {
     return dist;
 };
 let union = (pos, union) => {
-    calcDist(pos, union.first);
-    calcDist(pos, union.second);
-    let dist = Math.min(union.first.distance, union.second.distance);
+    let dist = Math.min(calcDist(pos, union.first), calcDist(pos, union.second));
     if (!union.color) {
         if (union.first.distance == dist && union.first.color) {
             union.altColor = union.first.color;
@@ -129,9 +125,7 @@ let union = (pos, union) => {
     return dist;
 };
 let intersect = (pos, intersect) => {
-    calcDist(pos, intersect.first);
-    calcDist(pos, intersect.second);
-    let dist = Math.max(intersect.first.distance, intersect.second.distance);
+    let dist = Math.max(calcDist(pos, intersect.first), calcDist(pos, intersect.second));
     if (!intersect.color) {
         if (intersect.first.distance == dist && intersect.first.color) {
             intersect.altColor = intersect.first.color;
@@ -161,7 +155,6 @@ let infinite = (pos, infinite) => {
     q.x = infinite.c.x == 0 ? pos.x : q.x;
     q.y = infinite.c.y == 0 ? pos.y : q.y;
     q.z = infinite.c.z == 0 ? pos.z : q.z;
-    calcDist(q, infinite.object);
     if (!infinite.color) {
         if (infinite.object.color) {
             infinite.altColor = infinite.object.color;
@@ -170,9 +163,9 @@ let infinite = (pos, infinite) => {
             infinite.altColor = infinite.object.altColor;
         }
     }
-    return infinite.object.distance;
+    return calcDist(q, infinite.object);
 };
-function calcDist(rayPos, obj) {
+let calcDist = (rayPos, obj) => {
     switch (obj.type) {
         case ShapeType.sphere:
             obj.distance = (sphereDist(rayPos, obj));
@@ -209,7 +202,19 @@ function calcDist(rayPos, obj) {
         default:
             break;
     }
-}
+    return obj.distance;
+};
+let calcNormal = (p, obj) => {
+    let eps = 0.0001;
+    let h = new Position(eps, 0, 0);
+    let xyyP = new Position(p.x + h.x, p.y + h.y, p.z + h.x);
+    let xyyM = new Position(p.x - h.x, p.y - h.y, p.z - h.x);
+    let yxyP = new Position(p.x + h.y, p.y + h.x, p.z + h.y);
+    let yxyM = new Position(p.x - h.y, p.y - h.x, p.z - h.y);
+    let yyxP = new Position(p.x + h.y, p.y + h.y, p.z + h.x);
+    let yyxM = new Position(p.x - h.y, p.y - h.y, p.z - h.x);
+    return normalize(new Position(calcDist(xyyP, obj) - calcDist(xyyM, obj), calcDist(yxyP, obj) - calcDist(yxyM, obj), calcDist(yyxP, obj) - calcDist(yyxM, obj)));
+};
 let minStep = 1 / 100;
 let maxDistance = 500;
 let maxSteps = 200;
@@ -238,8 +243,8 @@ _self.addEventListener('message', (evt) => {
                 distance = maxDistance;
                 evt.data.objects.forEach(obj => {
                     calcDist(rayPos, obj);
-                    if (obj.distance < distance) {
-                        distance = obj.distance;
+                    if (Math.abs(obj.distance) < distance) {
+                        distance = Math.abs(obj.distance);
                         smallest = obj;
                     }
                 });
@@ -262,6 +267,9 @@ _self.addEventListener('message', (evt) => {
                 else if (smallest.altColor) {
                     color = smallest.altColor;
                 }
+                let normal = calcNormal(rayPos, smallest);
+                //color = {r: Math.abs(normal.x)*255, g: Math.abs(normal.y)*255, b: Math.abs(normal.z)*255}
+                //color = {r: normal.x*255, g: 0, b: 0}
                 img.data[pixelindex] = (shade - (255 - color.r));
                 img.data[pixelindex + 1] = (shade - (255 - color.g));
                 img.data[pixelindex + 2] = (shade - (255 - color.b));

@@ -1,6 +1,6 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
-let res = 100;
+let res = 50;
 function closestMultiple(n, x) {
     if (x > n)
         return x;
@@ -224,13 +224,21 @@ let objects = [
             },
             //color: {r: 0, g: 0, b: 255}
         },
-    }
+    },
     // {
-    //     type: ShapeType.hexagonalPrism,
-    //     position: new Position(0,0),
-    //     h: new Position(1,1),
-    //     color: {r: 255, g: 0, b: 0}
-    // },
+    //     type: ShapeType.subtract,
+    //     subtractor: {
+    //         type: ShapeType.hexagonalPrism,
+    //         position: new Position(0,10),
+    //         h: new Position(20,10),
+    //         color: {r: 200, g: 200, b: 200}
+    //     },
+    //     subtractee: {
+    //         type: ShapeType.box,
+    //         position: new Position(0,5,0),
+    //         b: new Position(20,20,20)
+    //     }
+    // }
     // {
     //     type: ShapeType.plane,
     //     position: new Position(0,-1,0),
@@ -245,12 +253,12 @@ let objects = [
     //     b: new Position(1,1),
     //     color: {r: 255, b: 168, g: 237},
     // },
-    // {
-    //     type: ShapeType.infPlane,
-    //     position: new Position(0,0,0),
-    //     angle: new Position(0,1,0),
-    //     h: 1
-    // }
+    {
+        type: ShapeType.infPlane,
+        position: new Position(0, 0, 0),
+        angle: new Position(0, 1, 0),
+        h: 1
+    }
     //  #endregion
 ];
 // for (let i = 0; i < 360; i+=10) {
