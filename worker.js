@@ -216,7 +216,7 @@ let calcNormal = (p, obj) => {
     let yyxM = new Position(p.x - h.y, p.y - h.y, p.z - h.x);
     return normalize(new Position(calcDist(xyyP, obj) - calcDist(xyyM, obj), calcDist(yxyP, obj) - calcDist(yxyM, obj), calcDist(yyxP, obj) - calcDist(yyxM, obj)));
 };
-let minStep = 1 / 10000;
+let minStep = 1 / 1000000;
 let maxDistance = 100;
 let maxSteps = 200;
 let fov = 1.5;
