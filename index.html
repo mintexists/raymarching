@@ -16,10 +16,20 @@
 <div id="frametime"></div>
 <div id="chunkStats"></div>
 <br>
+<div id="img"></div>
 
 <script src="index.js"></script>
 
 <style>
+
+    img {
+        /* width: 92vh; */
+        /* max-width: 100vw; */
+        width: 20%;
+        margin: 0;
+        padding: 0;
+        image-rendering: pixelated;
+    }
 
     br {
         clear:both
@@ -28,8 +38,8 @@
     .canvas {
         width: 92vh;
         max-width: 100vw;
-        image-rendering: pixelated;
         display: block;
+        image-rendering: pixelated;
         margin: 0;
         padding: 0;
     }
@@ -85,4 +95,14 @@
     .down {
         margin-right: 150px;
     }
+
+    ::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    * {
+        -ms-overflow-style: none !important;  /* IE and Edge */
+        scrollbar-width: none !important;  /* Firefox */
+    }
+
 </style>

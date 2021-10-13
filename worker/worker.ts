@@ -104,7 +104,7 @@ let mandlebulbDist = (pos: Position, mandlebulb) => {
     pos = rotate(localize(mandlebulb.position, pos), mandlebulb.angle.yaw, mandlebulb.angle.pitch, mandlebulb.angle.roll)
     let iterations  = 10//100 - pythag(Position.zero, pos)
     let maxBulbDist = 10//pythag(Position.zero, pos) * 100
-    let power = 6
+    let power = mandlebulb.power
     let z = pos
     let dr = 1
     let r = 0
@@ -286,7 +286,7 @@ let calcNormal = (p: Position, obj) => {
     ))
 }
 
-let minStep = 1/1000000
+let minStep = 1/100
 let maxDistance = 100
 let maxSteps = 200
 let fov = 1.5
@@ -308,6 +308,7 @@ _self.addEventListener( 'message', ( evt ) => {
         for (let x = 0; x < evt.data.width; x++) {
 
             let totalDistance = 0
+            minStep = evt.data.minStep || minStep
             let distance = minStep
             let steps = 0
 
@@ -384,6 +385,8 @@ _self.addEventListener( 'message', ( evt ) => {
   
     let bytes = new Uint8ClampedArray( img.data );
   
+    // console.log("Done")
+
     self.postMessage( {
         type: 'end',
         bytes: bytes

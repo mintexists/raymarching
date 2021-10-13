@@ -1,6 +1,6 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
-let res = 1000;
+let res = 300;
 function closestMultiple(n, x) {
     if (x > n)
         return x;
@@ -183,7 +183,9 @@ let objects = [
     // },
     {
         type: ShapeType.mandlebulb,
-        position: new Position(2, 0, 0),
+        position: new Position(3, 0, 0),
+        power: 2,
+        angle: { roll: 0, pitch: 0, yaw: 0 }
         // color: {r: 255, b: 168, g: 237},
     },
     // {
@@ -272,11 +274,16 @@ let objects = [
 let roll = 0;
 let pitch = 0;
 let yaw = 0;
+let minStep = 1 / 10000;
 let camera = new Position(0, 0, 0);
 let time = performance.now();
 let framerates = [];
 let avgMax = 10;
 let arrAvg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+let r = 0;
+let p = 0;
+let y = 0;
+let step = 10;
 function draw() {
     if (chunks.every((chunk) => chunk.ready)) {
         chunks.forEach((chunk) => {
@@ -290,6 +297,7 @@ function draw() {
                 yaw: yaw,
                 roll: roll,
                 chunkCount: chunkCount,
+                minStep: minStep,
                 channels: 4,
                 camera: camera,
                 objects: objects,
@@ -303,6 +311,27 @@ function draw() {
         document.getElementById("frametime").innerHTML = (Math.floor(arrAvg(framerates))).toString();
         //document.getElementById("frametime").innerHTML = (Math.floor(1/((performance.now() - time) / 1000))).toString()
         time = performance.now();
+        y += step;
+        if (y > 359) {
+            y = y % 360;
+            p += step;
+        }
+        if (p > 359) {
+            p = p % 360;
+            r += step;
+        }
+        if (r > 359) {
+            r = r % 360;
+            objects[0].power += .1;
+            console.log(objects[0].power);
+        }
+        console.log(r, p, y);
+        objects[0].angle.roll = r;
+        objects[0].angle.yaw = y;
+        objects[0].angle.pitch = p;
+        let img = document.createElement('img');
+        img.src = canvas.toDataURL();
+        document.getElementById("img").appendChild(img);
     }
 }
 let moveSpeed = 1;
@@ -363,7 +392,7 @@ function main() {
     draw();
     window.requestAnimationFrame(main);
 }
-main();
+//main()
 document.addEventListener('keydown', (e) => {
     switch (e.key.toLowerCase()) {
         case "w":

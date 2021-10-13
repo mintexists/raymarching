@@ -71,7 +71,7 @@ let mandlebulbDist = (pos, mandlebulb) => {
     pos = rotate(localize(mandlebulb.position, pos), mandlebulb.angle.yaw, mandlebulb.angle.pitch, mandlebulb.angle.roll);
     let iterations = 10; //100 - pythag(Position.zero, pos)
     let maxBulbDist = 10; //pythag(Position.zero, pos) * 100
-    let power = 6;
+    let power = mandlebulb.power;
     let z = pos;
     let dr = 1;
     let r = 0;
@@ -216,7 +216,7 @@ let calcNormal = (p, obj) => {
     let yyxM = new Position(p.x - h.y, p.y - h.y, p.z - h.x);
     return normalize(new Position(calcDist(xyyP, obj) - calcDist(xyyM, obj), calcDist(yxyP, obj) - calcDist(yxyM, obj), calcDist(yyxP, obj) - calcDist(yyxM, obj)));
 };
-let minStep = 1 / 1000000;
+let minStep = 1 / 100;
 let maxDistance = 100;
 let maxSteps = 200;
 let fov = 1.5;
@@ -232,6 +232,7 @@ _self.addEventListener('message', (evt) => {
     for (let y = 0; y < evt.data.height; y++) {
         for (let x = 0; x < evt.data.width; x++) {
             let totalDistance = 0;
+            minStep = evt.data.minStep || minStep;
             let distance = minStep;
             let steps = 0;
             let smallest;
@@ -285,6 +286,7 @@ _self.addEventListener('message', (evt) => {
         }
     }
     let bytes = new Uint8ClampedArray(img.data);
+    // console.log("Done")
     self.postMessage({
         type: 'end',
         bytes: bytes
