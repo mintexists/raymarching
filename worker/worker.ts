@@ -286,7 +286,7 @@ let calcNormal = (p: Position, obj) => {
     ))
 }
 
-let minStep = 1/10000
+let minStep = 1/1000000
 let maxDistance = 100
 let maxSteps = 200
 let fov = 1.5
