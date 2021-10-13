@@ -102,9 +102,9 @@ let torusDist = (pos: Position, torus) => {
 let mandlebulbDist = (pos: Position, mandlebulb) => {
     if (!mandlebulb.angle) {mandlebulb.angle = {roll: 0, pitch: 0, yaw: 0}}
     pos = rotate(localize(mandlebulb.position, pos), mandlebulb.angle.yaw, mandlebulb.angle.pitch, mandlebulb.angle.roll)
-    let iterations  = 10**9//100 - pythag(Position.zero, pos)
-    let maxBulbDist = 10**9//pythag(Position.zero, pos) * 100
-    let power = 3
+    let iterations  = 10//100 - pythag(Position.zero, pos)
+    let maxBulbDist = 10//pythag(Position.zero, pos) * 100
+    let power = 6
     let z = pos
     let dr = 1
     let r = 0
@@ -145,9 +145,9 @@ let subtract = (pos: Position, subtract) => {
     
     if (!subtract.color) {
         if ((-subtract.subtractor.distance) == dist) {
-            subtract.altColor = subtract.subtractor.color
+            subtract.altColor = subtract.subtractor.color || subtract.subtractor.altColor
         } else if (subtract.subtractee.distance == dist) {
-            subtract.altColor = subtract.subtractee.color
+            subtract.altColor = subtract.subtractee.color || subtract.subtractee.altColor
         }
     }
 
@@ -161,10 +161,10 @@ let union = (pos: Position, union) => {
     )
 
     if (!union.color) {
-        if (union.first.distance == dist && union.first.color) {
-            union.altColor = union.first.color
-        } else if (union.second.distance == dist && union.second.color) {
-            union.altColor = union.second.color
+        if (union.first.distance == dist && union.first.color || union.first.altColor) {
+            union.altColor = union.first.color || union.first.altColor
+        } else if (union.second.distance == dist && union.second.color || union.second.altColor) {
+            union.altColor = union.second.color || union.second.altColor
         }
     }
 
@@ -263,6 +263,7 @@ let calcDist = (rayPos: Position, obj) => {
             break
         case ShapeType.hexagonalPrism:
             obj.distance = (hexagonalPrismDist(rayPos, obj))
+            break
         default:
             break;
     }
@@ -285,10 +286,10 @@ let calcNormal = (p: Position, obj) => {
     ))
 }
 
-let minStep = 1/100
-let maxDistance = 500
+let minStep = 1/10000
+let maxDistance = 100
 let maxSteps = 200
-let fov = 1
+let fov = 1.5
 
 _self.addEventListener( 'message', ( evt ) => {
 
@@ -349,7 +350,7 @@ _self.addEventListener( 'message', ( evt ) => {
             let shade = 0//(((x + evt.data.x) / (evt.data.width) / 4) + ((y + evt.data.y) / (evt.data.height) / 4))
 
             if (distance < minStep) {
-                // shade = (distance * (1/minStep))
+                //shade = (totalDistance/maxDistance)//(distance * (1/minStep))
                 shade = ((1 - steps/maxSteps) ** 2) * 255
                 
                 let color = {r: 255, g: 255, b: 255}

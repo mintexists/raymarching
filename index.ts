@@ -1,7 +1,7 @@
 let canvas = document.getElementById("canvas") as HTMLCanvasElement
 let ctx = canvas.getContext("2d")
 
-let res = 50
+let res = 1000
 
 function closestMultiple(n, x) {
     if (x > n) return x
@@ -223,51 +223,51 @@ let objects: any = [
     //     major: 1,
     //     color: {r: 255, b: 168, g: 237},
     // },
-    // {
-    //     type: ShapeType.mandlebulb,
-    //     position: new Position(10,0,0),
-    //     color: {r: 255, b: 168, g: 237},
-    // },
+    {
+        type: ShapeType.mandlebulb,
+        position: new Position(2,0,0),
+        // color: {r: 255, b: 168, g: 237},
+    },
     // {
     //     type: ShapeType.sphere,
     //     position: new Position(5,0,0),
     //     radius: 1,
     //     color: {r: 1, b: 1, g: 1}
     // },
-    {
-        type: ShapeType.infinite,
-        c: new Position(4,0,4),
-        object: {
-            type: ShapeType.torus,
-            position: new Position(0,0,0),
-            minor: .5,
-            major: 1,
-            color: {r: 241, g: 209, b: 162},
-        },
-    },
-    {
-        type: ShapeType.infinite,
-        c: new Position(4,0,4),
-        object: {
-            type: ShapeType.subtract,
-            subtractor: {
-                type: ShapeType.torus,
-                position: new Position(0,0,0),
-                minor: .5,
-                major: 1,
-                color: {r: 241, g: 209, b: 162},
+    // {
+    //     type: ShapeType.infinite,
+    //     c: new Position(4,0,4),
+    //     object: {
+    //         type: ShapeType.torus,
+    //         position: new Position(0,0,0),
+    //         minor: .5,
+    //         major: 1,
+    //         color: {r: 241, g: 209, b: 162},
+    //     },
+    // },
+    // {
+    //     type: ShapeType.infinite,
+    //     c: new Position(4,0,4),
+    //     object: {
+    //         type: ShapeType.subtract,
+    //         subtractor: {
+    //             type: ShapeType.torus,
+    //             position: new Position(0,0,0),
+    //             minor: .5,
+    //             major: 1,
+    //             color: {r: 241, g: 209, b: 162},
 
-            },
-            subtractee: {
-                type: ShapeType.torus,
-                position: new Position(0,.1,0),
-                minor: .5,
-                major: 1,
-                color: {r: 245, g: 159, b: 192},
-            },
-            //color: {r: 0, g: 0, b: 255}
-        },
-    },
+    //         },
+    //         subtractee: {
+    //             type: ShapeType.torus,
+    //             position: new Position(0,.1,0),
+    //             minor: .5,
+    //             major: 1,
+    //             color: {r: 245, g: 159, b: 192},
+    //         },
+    //         //color: {r: 0, g: 0, b: 255}
+    //     },
+    // },
     // {
     //     type: ShapeType.subtract,
     //     subtractor: {
@@ -296,12 +296,12 @@ let objects: any = [
     //     b: new Position(1,1),
     //     color: {r: 255, b: 168, g: 237},
     // },
-    {
-        type: ShapeType.infPlane,
-        position: new Position(0,0,0),
-        angle: new Position(0,1,0),
-        h: 1
-    }
+    // {
+    //     type: ShapeType.infPlane,
+    //     position: new Position(0,0,0),
+    //     angle: new Position(0,1,0),
+    //     h: 1
+    // }
     //  #endregion
 ]
 

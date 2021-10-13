@@ -69,9 +69,9 @@ let mandlebulbDist = (pos, mandlebulb) => {
         mandlebulb.angle = { roll: 0, pitch: 0, yaw: 0 };
     }
     pos = rotate(localize(mandlebulb.position, pos), mandlebulb.angle.yaw, mandlebulb.angle.pitch, mandlebulb.angle.roll);
-    let iterations = Math.pow(10, 9); //100 - pythag(Position.zero, pos)
-    let maxBulbDist = Math.pow(10, 9); //pythag(Position.zero, pos) * 100
-    let power = 3;
+    let iterations = 10; //100 - pythag(Position.zero, pos)
+    let maxBulbDist = 10; //pythag(Position.zero, pos) * 100
+    let power = 6;
     let z = pos;
     let dr = 1;
     let r = 0;
@@ -104,10 +104,10 @@ let subtract = (pos, subtract) => {
     let dist = Math.max(-calcDist(pos, subtract.subtractor), calcDist(pos, subtract.subtractee));
     if (!subtract.color) {
         if ((-subtract.subtractor.distance) == dist) {
-            subtract.altColor = subtract.subtractor.color;
+            subtract.altColor = subtract.subtractor.color || subtract.subtractor.altColor;
         }
         else if (subtract.subtractee.distance == dist) {
-            subtract.altColor = subtract.subtractee.color;
+            subtract.altColor = subtract.subtractee.color || subtract.subtractee.altColor;
         }
     }
     return dist;
@@ -115,11 +115,11 @@ let subtract = (pos, subtract) => {
 let union = (pos, union) => {
     let dist = Math.min(calcDist(pos, union.first), calcDist(pos, union.second));
     if (!union.color) {
-        if (union.first.distance == dist && union.first.color) {
-            union.altColor = union.first.color;
+        if (union.first.distance == dist && union.first.color || union.first.altColor) {
+            union.altColor = union.first.color || union.first.altColor;
         }
-        else if (union.second.distance == dist && union.second.color) {
-            union.altColor = union.second.color;
+        else if (union.second.distance == dist && union.second.color || union.second.altColor) {
+            union.altColor = union.second.color || union.second.altColor;
         }
     }
     return dist;
@@ -199,6 +199,7 @@ let calcDist = (rayPos, obj) => {
             break;
         case ShapeType.hexagonalPrism:
             obj.distance = (hexagonalPrismDist(rayPos, obj));
+            break;
         default:
             break;
     }
@@ -215,10 +216,10 @@ let calcNormal = (p, obj) => {
     let yyxM = new Position(p.x - h.y, p.y - h.y, p.z - h.x);
     return normalize(new Position(calcDist(xyyP, obj) - calcDist(xyyM, obj), calcDist(yxyP, obj) - calcDist(yxyM, obj), calcDist(yyxP, obj) - calcDist(yyxM, obj)));
 };
-let minStep = 1 / 100;
-let maxDistance = 500;
+let minStep = 1 / 10000;
+let maxDistance = 100;
 let maxSteps = 200;
-let fov = 1;
+let fov = 1.5;
 _self.addEventListener('message', (evt) => {
     if (chunkCount != evt.data.chunkCount) {
         chunkCount = evt.data.chunkCount;
@@ -258,7 +259,7 @@ _self.addEventListener('message', (evt) => {
             let pixelindex = (y * evt.data.width + x) * 4;
             let shade = 0; //(((x + evt.data.x) / (evt.data.width) / 4) + ((y + evt.data.y) / (evt.data.height) / 4))
             if (distance < minStep) {
-                // shade = (distance * (1/minStep))
+                //shade = (totalDistance/maxDistance)//(distance * (1/minStep))
                 shade = (Math.pow((1 - steps / maxSteps), 2)) * 255;
                 let color = { r: 255, g: 255, b: 255 };
                 if (smallest.color != undefined) {
