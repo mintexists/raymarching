@@ -1,7 +1,7 @@
 let canvas = document.getElementById("canvas") as HTMLCanvasElement
 let ctx = canvas.getContext("2d")
 
-let res = 300
+let res = 1000
 
 function closestMultiple(n, x) {
     if (x > n) return x
@@ -227,6 +227,7 @@ let objects: any = [
         type: ShapeType.mandlebulb,
         position: new Position(3,0,0),
         power: 2,
+        iterations: 10,
         angle: {roll: 0, pitch:0, yaw: 0}
         // color: {r: 255, b: 168, g: 237},
     },
@@ -320,7 +321,7 @@ let roll = 0
 let pitch = 0
 let yaw   = 0
 
-let minStep = 1/10000
+let minStep = 1/1000
 
 let camera = new Position(0,0,0)
 
@@ -331,10 +332,10 @@ let avgMax = 10
 
 let arrAvg = arr => arr.reduce((a,b) => a + b, 0) / arr.length
 
-let r = 0
-let p = 0
-let y = 0
-let step = 10
+// let r = 0
+// let p = 0
+// let y = 0
+// let step = 10
 
 function draw() {
     if (chunks.every((chunk) => chunk.ready)) {
@@ -367,26 +368,26 @@ function draw() {
         //document.getElementById("frametime").innerHTML = (Math.floor(1/((performance.now() - time) / 1000))).toString()
         time = performance.now()
 
-        y+=step
-        if (y > 359) {
-            y = y % 360
-            p += step
-        }
-        if (p > 359) {
-            p = p % 360
-            r +=step
-        }
-        if (r > 359) {
-            r = r % 360
-            objects[0].power += .1
-            console.log(objects[0].power)
-        }
+        // y+=step
+        // if (y > 359) {
+        //     y = y % 360
+        //     p += step
+        // }
+        // if (p > 359) {
+        //     p = p % 360
+        //     r +=step
+        // }
+        // if (r > 359) {
+        //     r = r % 360
+        //     objects[0].power += .1
+        //     console.log(objects[0].power)
+        // }
 
-        console.log(r,p,y)
+        // console.log(r,p,y)
 
-        objects[0].angle.roll = r
-        objects[0].angle.yaw = y
-        objects[0].angle.pitch = p
+        // objects[0].angle.roll = r
+        // objects[0].angle.yaw = y
+        // objects[0].angle.pitch = p
 
         let img = document.createElement('img');
         img.src = canvas.toDataURL()

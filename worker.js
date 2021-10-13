@@ -69,8 +69,8 @@ let mandlebulbDist = (pos, mandlebulb) => {
         mandlebulb.angle = { roll: 0, pitch: 0, yaw: 0 };
     }
     pos = rotate(localize(mandlebulb.position, pos), mandlebulb.angle.yaw, mandlebulb.angle.pitch, mandlebulb.angle.roll);
-    let iterations = 10; //100 - pythag(Position.zero, pos)
-    let maxBulbDist = 10; //pythag(Position.zero, pos) * 100
+    let iterations = mandlebulb.iterations || 10;
+    let maxBulbDist = 10;
     let power = mandlebulb.power;
     let z = pos;
     let dr = 1;
