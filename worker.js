@@ -208,8 +208,8 @@ let calcDist = (rayPos, obj) => {
 let calcNormal = (p, obj) => {
     let eps = 0.0001;
     let h = new Position(eps, 0, 0);
-    let xyyP = new Position(p.x + h.x, p.y + h.y, p.z + h.x);
-    let xyyM = new Position(p.x - h.x, p.y - h.y, p.z - h.x);
+    let xyyP = new Position(p.x + h.x, p.y + h.y, p.z + h.y);
+    let xyyM = new Position(p.x - h.x, p.y - h.y, p.z - h.y);
     let yxyP = new Position(p.x + h.y, p.y + h.x, p.z + h.y);
     let yxyM = new Position(p.x - h.y, p.y - h.x, p.z - h.y);
     let yyxP = new Position(p.x + h.y, p.y + h.y, p.z + h.x);
@@ -220,6 +220,8 @@ let minStep = 1 / 100;
 let maxDistance = 100;
 let maxSteps = 200;
 let fov = 1.5;
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+const norm = (val, max, min) => (val - min) / (max - min);
 _self.addEventListener('message', (evt) => {
     if (chunkCount != evt.data.chunkCount) {
         chunkCount = evt.data.chunkCount;
@@ -272,6 +274,47 @@ _self.addEventListener('message', (evt) => {
                 let normal = calcNormal(rayPos, smallest);
                 //color = {r: Math.abs(normal.x)*255, g: Math.abs(normal.y)*255, b: Math.abs(normal.z)*255}
                 //color = {r: normal.x*255, g: 0, b: 0}
+                let light = evt.data.light;
+                vector = normalize(localize(light, rayPos));
+                let oldPos = new Position(rayPos.x, rayPos.y, rayPos.z);
+                rayPos.x += (normal.x * minStep);
+                rayPos.y += (normal.y * minStep);
+                rayPos.z += (normal.z * minStep);
+                let minDistFromLight = 2 * minStep;
+                totalDistance = 0;
+                minStep = evt.data.minStep || minStep;
+                distance = minStep;
+                steps = 0;
+                while (true) {
+                    if (totalDistance > maxDistance || distance < minStep || steps > maxSteps) {
+                        break;
+                    }
+                    distance = maxDistance;
+                    evt.data.objects.forEach(obj => {
+                        calcDist(rayPos, obj);
+                        if (Math.abs(obj.distance) < distance) {
+                            distance = Math.abs(obj.distance);
+                            smallest = obj;
+                        }
+                    });
+                    if (pythag(rayPos, light) < distance) {
+                        distance = pythag(rayPos, light);
+                    }
+                    totalDistance += distance;
+                    rayPos.x += vector.x * distance;
+                    rayPos.y += vector.y * distance;
+                    rayPos.z += vector.z * distance;
+                    steps++;
+                    //debugger
+                }
+                if (pythag(rayPos, light) < minDistFromLight) {
+                    shade = 255;
+                }
+                else {
+                    shade = 255 / 2;
+                }
+                // shade = 255
+                // color = {r: Math.abs(normal.x)*255, g: Math.abs(normal.y)*255, b: Math.abs(normal.z)*255}
                 img.data[pixelindex] = (shade - (255 - color.r));
                 img.data[pixelindex + 1] = (shade - (255 - color.g));
                 img.data[pixelindex + 2] = (shade - (255 - color.b));

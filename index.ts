@@ -1,7 +1,7 @@
 let canvas = document.getElementById("canvas") as HTMLCanvasElement
 let ctx = canvas.getContext("2d")
 
-let res = 1000
+let res = 200
 
 function closestMultiple(n, x) {
     if (x > n) return x
@@ -223,20 +223,37 @@ let objects: any = [
     //     major: 1,
     //     color: {r: 255, b: 168, g: 237},
     // },
+    // {
+    //     type: ShapeType.mandlebulb,
+    //     position: new Position(3,0,0),
+    //     power: 2,
+    //     iterations: 10,
+    //     angle: {roll: 0, pitch:0, yaw: 0}
+    //     // color: {r: 255, b: 168, g: 237},
+    // },
     {
-        type: ShapeType.mandlebulb,
-        position: new Position(3,0,0),
-        power: 2,
-        iterations: 10,
-        angle: {roll: 0, pitch:0, yaw: 0}
-        // color: {r: 255, b: 168, g: 237},
+        type: ShapeType.sphere,
+        position: new Position(5,0,-3),
+        radius: 1,
+        color: {r: 255, b: 0, g: 0}, 
     },
     // {
     //     type: ShapeType.sphere,
     //     position: new Position(5,0,0),
     //     radius: 1,
-    //     color: {r: 1, b: 1, g: 1}
     // },
+    {
+        type: ShapeType.sphere,
+        position: new Position(5,0,3),
+        radius: 1,
+        color: {r: 0, b: 255, g: 0},
+    },
+    {
+        type: ShapeType.box,
+        position: new Position(5,0,0),
+        b: new Position(1,2,1),
+        color: {r: 0, b: 0, g: 255},
+    },
     // {
     //     type: ShapeType.infinite,
     //     c: new Position(4,0,4),
@@ -299,12 +316,13 @@ let objects: any = [
     //     b: new Position(1,1),
     //     color: {r: 255, b: 168, g: 237},
     // },
-    // {
-    //     type: ShapeType.infPlane,
-    //     position: new Position(0,0,0),
-    //     angle: new Position(0,1,0),
-    //     h: 1
-    // }
+    {
+        type: ShapeType.infPlane,
+        position: new Position(0,0,0),
+        angle: new Position(0,1,0),
+        h: 1
+    },
+
     //  #endregion
 ]
 
@@ -324,6 +342,10 @@ let yaw   = 0
 let minStep = 1/1000
 
 let camera = new Position(0,0,0)
+let bounces = 1
+
+let light = new Position(5,5,0)
+let brightness = 255
 
 let time = performance.now()
 
@@ -351,6 +373,9 @@ function draw() {
                 roll: roll,
                 chunkCount: chunkCount,
                 minStep: minStep,
+                light: light,
+                brightness: brightness,
+                bounces: bounces,
                 channels: 4,
                 camera: camera,
                 objects: objects,
@@ -389,9 +414,9 @@ function draw() {
         // objects[0].angle.yaw = y
         // objects[0].angle.pitch = p
 
-        let img = document.createElement('img');
-        img.src = canvas.toDataURL()
-        document.getElementById("img").appendChild(img)
+        // let img = document.createElement('img');
+        // img.src = canvas.toDataURL()
+        // document.getElementById("img").appendChild(img)
 
     }
 }
@@ -473,7 +498,7 @@ function main() {
     window.requestAnimationFrame(main)
 }
 
-//main()
+main()
 
 document.addEventListener('keydown', (e) => {
     switch (e.key.toLowerCase()) {
