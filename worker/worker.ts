@@ -27,6 +27,9 @@ class Position {
 let rad2deg = (rad: number) => (180 / Math.PI) * rad
 let deg2rad = (deg: number) => deg * (Math.PI / 180)
 
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+const norm = (val, max, min) => (val - min) / (max - min)
+
 let pythag = (pos1: Position, pos2: Position=Position.zero) => Math.hypot(pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z)
 
 let localize = (pos1: Position, pos2: Position) => new Position(pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z)
@@ -291,8 +294,50 @@ let maxDistance = 100
 let maxSteps = 200
 let fov = 1.5
 
-const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
-const norm = (val, max, min) => (val - min) / (max - min)
+function castRay(pos: Position, vector: Position, objects: Array<any> = [], lights: Array<any> = []) {
+    let totalDistance = 0
+    let distance = maxDistance
+    let object
+    let rayPos = new Position(pos.x, pos.y, pos.z)
+    vector = new Position(vector.x, vector.y, vector.z)
+    let normal: Position
+    let steps = 0
+
+    while (!(totalDistance > maxDistance || distance < minStep || steps > maxSteps)) {
+        distance = maxDistance
+        objects.forEach(obj => {
+            calcDist(rayPos, obj) 
+            if (Math.abs(obj.distance) < distance) {
+                distance = Math.abs(obj.distance)
+                object = obj
+            }
+        })
+
+        lights.forEach(light => {
+            let dist = pythag(rayPos, light.position)
+
+            if (Math.abs(dist) < distance) {
+                distance = Math.abs(dist)
+                object = light
+            }
+        })
+
+        totalDistance += distance
+        rayPos.x += vector.x * distance
+        rayPos.y += vector.y * distance
+        rayPos.z += vector.z * distance
+
+        steps ++
+    }
+    return {
+        object: object,
+        normal: normal,
+        position: rayPos,
+        steps: steps,
+        distance: distance,
+        totalDistance: totalDistance,
+    }
+}
 
 _self.addEventListener( 'message', ( evt ) => {
 
@@ -310,50 +355,54 @@ _self.addEventListener( 'message', ( evt ) => {
     for (let y = 0; y < evt.data.height; y++) {
         for (let x = 0; x < evt.data.width; x++) {
 
-            let totalDistance = 0
-            minStep = evt.data.minStep || minStep
-            let distance = minStep
-            let steps = 0
-
-            let smallest: any
-
             let rayPos = new Position(evt.data.camera.x, evt.data.camera.y, evt.data.camera.z)
-            
             let vector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll))
+            let ray = castRay(rayPos,vector,evt.data.objects)
+
+            // let totalDistance = 0
+            // minStep = evt.data.minStep || minStep
+            // let distance = minStep
+            // let steps = 0
+
+            // let smallest: any
+
+            // let rayPos = new Position(evt.data.camera.x, evt.data.camera.y, evt.data.camera.z)
             
-            while (true) {
+            // let vector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll))
+            
+            // while (!(totalDistance > maxDistance || distance < minStep || steps > maxSteps)) {
 
-                if (totalDistance > maxDistance || distance < minStep || steps > maxSteps) {
-                    break
-                }
+            //     // if (!(totalDistance > maxDistance || distance < minStep || steps > maxSteps)) {
+            //     //     break
+            //     // }
 
-                distance = maxDistance
+            //     distance = maxDistance
 
-                evt.data.objects.forEach(obj => {
-                    calcDist(rayPos, obj) 
+            //     evt.data.objects.forEach(obj => {
+            //         calcDist(rayPos, obj) 
 
-                    if (Math.abs(obj.distance) < distance) {
-                        distance = Math.abs(obj.distance)
-                        smallest = obj
-                    }
-                })
+            //         if (Math.abs(obj.distance) < distance) {
+            //             distance = Math.abs(obj.distance)
+            //             smallest = obj
+            //         }
+            //     })
 
-                totalDistance += distance
+            //     totalDistance += distance
 
-                rayPos.x += vector.x * distance
-                rayPos.y += vector.y * distance
-                rayPos.z += vector.z * distance
+            //     rayPos.x += vector.x * distance
+            //     rayPos.y += vector.y * distance
+            //     rayPos.z += vector.z * distance
 
-                steps++
+            //     steps++
 
-            }
+            // }
 
             //let pixelindex = 4 * (x + y * img.width)
             let pixelindex = (y * evt.data.width + x) * 4
 
             let shade = 0//(((x + evt.data.x) / (evt.data.width) / 4) + ((y + evt.data.y) / (evt.data.height) / 4))
 
-            if (distance < minStep) {
+            if (ray.distance < minStep) {
                 //shade = (totalDistance/maxDistance)//(distance * (1/minStep))
                 shade = ((1 - steps/maxSteps) ** 2) * 255
                 

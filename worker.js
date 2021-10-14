@@ -17,6 +17,8 @@ Position.left = new Position(0, 0, -1);
 Position.right = new Position(0, 0, 1);
 let rad2deg = (rad) => (180 / Math.PI) * rad;
 let deg2rad = (deg) => deg * (Math.PI / 180);
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+const norm = (val, max, min) => (val - min) / (max - min);
 let pythag = (pos1, pos2 = Position.zero) => Math.hypot(pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z);
 let localize = (pos1, pos2) => new Position(pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z);
 let normalize = (vector) => {
@@ -220,8 +222,45 @@ let minStep = 1 / 100;
 let maxDistance = 100;
 let maxSteps = 200;
 let fov = 1.5;
-const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
-const norm = (val, max, min) => (val - min) / (max - min);
+function castRay(pos, vector, objects, lights) {
+    let totalDistance = 0;
+    let distance = maxDistance;
+    let object;
+    let rayPos = new Position(pos.x, pos.y, pos.z);
+    vector = new Position(vector.x, vector.y, vector.z);
+    let normal;
+    let steps = 0;
+    while (!(totalDistance > maxDistance || distance < minStep || steps > maxSteps)) {
+        distance = maxDistance;
+        objects.forEach(obj => {
+            calcDist(rayPos, obj);
+            if (Math.abs(obj.distance) < distance) {
+                distance = Math.abs(obj.distance);
+                object = obj;
+            }
+        });
+        lights.forEach(light => {
+            let dist = pythag(rayPos, light.position);
+            if (Math.abs(dist) < distance) {
+                distance = Math.abs(dist);
+                object = light;
+            }
+        });
+        totalDistance += distance;
+        rayPos.x += vector.x * distance;
+        rayPos.y += vector.y * distance;
+        rayPos.z += vector.z * distance;
+        steps++;
+    }
+    return {
+        object: object,
+        normal: normal,
+        position: rayPos,
+        steps: steps,
+        distance: distance,
+        totalDistance: totalDistance,
+    };
+}
 _self.addEventListener('message', (evt) => {
     if (chunkCount != evt.data.chunkCount) {
         chunkCount = evt.data.chunkCount;
@@ -240,10 +279,10 @@ _self.addEventListener('message', (evt) => {
             let smallest;
             let rayPos = new Position(evt.data.camera.x, evt.data.camera.y, evt.data.camera.z);
             let vector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll));
-            while (true) {
-                if (totalDistance > maxDistance || distance < minStep || steps > maxSteps) {
-                    break;
-                }
+            while (!(totalDistance > maxDistance || distance < minStep || steps > maxSteps)) {
+                // if (!(totalDistance > maxDistance || distance < minStep || steps > maxSteps)) {
+                //     break
+                // }
                 distance = maxDistance;
                 evt.data.objects.forEach(obj => {
                     calcDist(rayPos, obj);
