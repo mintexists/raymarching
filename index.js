@@ -1,6 +1,6 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
-let res = 200;
+let res = 500;
 function closestMultiple(n, x) {
     if (x > n)
         return x;
@@ -212,6 +212,12 @@ let objects = [
         b: new Position(1, 2, 1),
         color: { r: 0, b: 0, g: 255 },
     },
+    {
+        type: ShapeType.sphere,
+        position: new Position(5, 2, 3),
+        radius: .5,
+        color: { r: 0, b: 255, g: 0 },
+    },
     // {
     //     type: ShapeType.infinite,
     //     c: new Position(4,0,4),
@@ -281,6 +287,14 @@ let objects = [
     },
     //  #endregion
 ];
+let lights = [
+    {
+        position: new Position(5, 5, 0),
+    },
+    {
+        position: new Position(5, 5, 3),
+    },
+];
 // for (let i = 0; i < 360; i+=10) {
 //     objects.push({
 //         type: ShapeType.sphere,
@@ -321,6 +335,7 @@ function draw() {
                 minStep: minStep,
                 light: light,
                 brightness: brightness,
+                lights: lights,
                 bounces: bounces,
                 channels: 4,
                 camera: camera,
@@ -332,7 +347,7 @@ function draw() {
         if (framerates.length > avgMax) {
             framerates.shift();
         }
-        document.getElementById("frametime").innerHTML = (Math.floor(arrAvg(framerates))).toString();
+        document.getElementById("fps").innerHTML = (Math.floor(arrAvg(framerates))).toString();
         //document.getElementById("frametime").innerHTML = (Math.floor(1/((performance.now() - time) / 1000))).toString()
         time = performance.now();
         // y+=step
@@ -366,6 +381,7 @@ let chunkStats = document.getElementById("chunkStats");
 let move = Position.zero;
 function main() {
     let delta = (performance.now() - time) / 1000;
+    document.getElementById("frametime").innerHTML = delta.toString();
     chunkStats.innerHTML = "%: ";
     chunks.forEach((chunk) => {
         chunkStats.innerHTML += `${chunk.ready ? "#" : ""}`;
