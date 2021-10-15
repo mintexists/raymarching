@@ -1,6 +1,6 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
-let res = 500;
+let res = 100;
 function closestMultiple(n, x) {
     if (x > n)
         return x;
@@ -189,35 +189,35 @@ let objects = [
     //     angle: {roll: 0, pitch:0, yaw: 0}
     //     // color: {r: 255, b: 168, g: 237},
     // },
-    {
-        type: ShapeType.sphere,
-        position: new Position(5, 0, -3),
-        radius: 1,
-        color: { r: 255, b: 0, g: 0 },
-    },
+    // {
+    //     type: ShapeType.sphere,
+    //     position: new Position(5,0,-3),
+    //     radius: 1,
+    //     color: {r: 255, b: 0, g: 0}, 
+    // },
     // {
     //     type: ShapeType.sphere,
     //     position: new Position(5,0,0),
     //     radius: 1,
     // },
-    {
-        type: ShapeType.sphere,
-        position: new Position(5, 0, 3),
-        radius: 1,
-        color: { r: 0, b: 255, g: 0 },
-    },
+    // {
+    //     type: ShapeType.sphere,
+    //     position: new Position(5,0,3),
+    //     radius: 1,
+    //     color: {r: 0, b: 255, g: 0},
+    // },
     {
         type: ShapeType.box,
         position: new Position(5, 0, 0),
         b: new Position(1, 2, 1),
         color: { r: 0, b: 0, g: 255 },
     },
-    {
-        type: ShapeType.sphere,
-        position: new Position(5, 2, 3),
-        radius: .5,
-        color: { r: 0, b: 255, g: 0 },
-    },
+    // {
+    //     type: ShapeType.sphere,
+    //     position: new Position(5,2,3),
+    //     radius: .5,
+    //     color: {r: 0, b: 255, g: 0},
+    // },
     // {
     //     type: ShapeType.infinite,
     //     c: new Position(4,0,4),
@@ -289,36 +289,29 @@ let objects = [
 ];
 let lights = [
     {
-        position: new Position(5, 5, 0),
+        position: new Position(8, 3, 0),
+        radius: 10,
     },
     {
-        position: new Position(5, 5, 3),
+        position: new Position(5, 3, 3),
+        radius: 10,
+    },
+    {
+        position: new Position(5, 5, 0),
+        radius: 10,
     },
 ];
-// for (let i = 0; i < 360; i+=10) {
-//     objects.push({
-//         type: ShapeType.sphere,
-//         position: new Position(20 * Math.cos(deg2rad(i)),0,20 * Math.sin(deg2rad(i))),
-//         radius: Math.random() / 2 + .75,
-//         color: {r: Math.random() * 255, b: Math.random() * 255, g: Math.random() * 255}
-//     })
-// }
+let skyBrightness = 1;
+let camera = new Position(0, 0, 0);
 let roll = 0;
 let pitch = 0;
 let yaw = 0;
 let minStep = 1 / 1000;
-let camera = new Position(0, 0, 0);
-let bounces = 1;
-let light = new Position(5, 5, 0);
-let brightness = 255;
+let bounces = 10;
 let time = performance.now();
 let framerates = [];
 let avgMax = 10;
 let arrAvg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
-// let r = 0
-// let p = 0
-// let y = 0
-// let step = 10
 function draw() {
     if (chunks.every((chunk) => chunk.ready)) {
         chunks.forEach((chunk) => {
@@ -333,8 +326,6 @@ function draw() {
                 roll: roll,
                 chunkCount: chunkCount,
                 minStep: minStep,
-                light: light,
-                brightness: brightness,
                 lights: lights,
                 bounces: bounces,
                 channels: 4,
@@ -348,26 +339,7 @@ function draw() {
             framerates.shift();
         }
         document.getElementById("fps").innerHTML = (Math.floor(arrAvg(framerates))).toString();
-        //document.getElementById("frametime").innerHTML = (Math.floor(1/((performance.now() - time) / 1000))).toString()
         time = performance.now();
-        // y+=step
-        // if (y > 359) {
-        //     y = y % 360
-        //     p += step
-        // }
-        // if (p > 359) {
-        //     p = p % 360
-        //     r +=step
-        // }
-        // if (r > 359) {
-        //     r = r % 360
-        //     objects[0].power += .1
-        //     console.log(objects[0].power)
-        // }
-        // console.log(r,p,y)
-        // objects[0].angle.roll = r
-        // objects[0].angle.yaw = y
-        // objects[0].angle.pitch = p
         // let img = document.createElement('img');
         // img.src = canvas.toDataURL()
         // document.getElementById("img").appendChild(img)
@@ -382,6 +354,7 @@ let move = Position.zero;
 function main() {
     let delta = (performance.now() - time) / 1000;
     document.getElementById("frametime").innerHTML = delta.toString();
+    delta = delta > 1 ? 1 : delta;
     chunkStats.innerHTML = "%: ";
     chunks.forEach((chunk) => {
         chunkStats.innerHTML += `${chunk.ready ? "#" : ""}`;
