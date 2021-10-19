@@ -1,6 +1,6 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
-let res = 100;
+let res = 200;
 function closestMultiple(n, x) {
     if (x > n)
         return x;
@@ -181,14 +181,16 @@ let objects = [
     //     major: 1,
     //     color: {r: 255, b: 168, g: 237},
     // },
-    // {
-    //     type: ShapeType.mandlebulb,
-    //     position: new Position(3,0,0),
-    //     power: 2,
-    //     iterations: 10,
-    //     angle: {roll: 0, pitch:0, yaw: 0}
-    //     // color: {r: 255, b: 168, g: 237},
-    // },
+    {
+        type: ShapeType.mandlebulb,
+        position: new Position(3, 0, 0),
+        power: 2,
+        iterations: 10,
+        angle: { roll: 0, pitch: 0, yaw: 0 },
+        color: { r: 255, b: 168, g: 237 },
+        roughness: 1,
+        reflectivity: 1,
+    },
     // {
     //     type: ShapeType.sphere,
     //     position: new Position(5,0,-3),
@@ -200,27 +202,30 @@ let objects = [
     //     position: new Position(5,0,0),
     //     radius: 1,
     // },
-    {
-        type: ShapeType.sphere,
-        position: new Position(5, 0, 0),
-        radius: 1,
-        roughness: 0,
-        reflectivity: .5,
-    },
-    {
-        type: ShapeType.box,
-        position: new Position(5, 0, 5),
-        b: new Position(10, 2, 2),
-        roughness: 0,
-        reflectivity: .9,
-    },
-    {
-        type: ShapeType.box,
-        position: new Position(5, 0, -5),
-        b: new Position(10, 2, 2),
-        roughness: 0,
-        reflectivity: .9,
-    },
+    // {
+    //     type: ShapeType.sphere,
+    //     position: new Position(5,0,0),
+    //     radius: 1,
+    //     roughness: 1,
+    //     reflectivity: 1,
+    //     color: {r: 255, g: 0, b: 0},
+    // },
+    // {
+    //     type: ShapeType.box,
+    //     position: new Position(5,0,5),
+    //     b: new Position(10,2,2),
+    //     roughness: 0,
+    //     reflectivity: .9,
+    //     color: {r: 255, g: 255, b: 255},
+    // },
+    // {
+    //     type: ShapeType.box,
+    //     position: new Position(5,0,-5),
+    //     b: new Position(10,2,2),
+    //     roughness: 0,
+    //     reflectivity: .9,
+    //     color: {r: 255, g: 255, b: 255},
+    // },
     // {
     //     type: ShapeType.sphere,
     //     position: new Position(5,2,3),
@@ -307,8 +312,9 @@ let objects = [
         position: new Position(0, 0, 0),
         angle: new Position(0, 1, 0),
         h: 1,
-        roughness: 0,
-        reflectivity: 1,
+        roughness: 1,
+        reflectivity: .9,
+        color: { r: 255, g: 255, b: 255 },
     },
     //  #endregion
 ];
@@ -326,14 +332,17 @@ let lights = [
         radius: 10,
     },
 ];
-let skyBrightness = 1;
+let sky = {
+    brightness: 1,
+    color: { r: 189, g: 246, b: 254 },
+};
 let camera = new Position(0, 0, 0);
 let roll = 0;
 let pitch = 0;
 let yaw = 0;
 let minStep = 1 / 1000;
-let maxBounces = 5;
-let samples = 5;
+let maxBounces = 1;
+let samples = 1;
 let time = performance.now();
 let framerates = [];
 let avgMax = 10;
@@ -355,7 +364,7 @@ function draw() {
                 lights: lights,
                 maxBounces: maxBounces,
                 samples: samples,
-                skyBrightness: skyBrightness,
+                sky: sky,
                 channels: 4,
                 camera: camera,
                 objects: objects,

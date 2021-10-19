@@ -417,7 +417,7 @@ _self.addEventListener( 'message', ( evt ) => {
     for (let y = 0; y < evt.data.height; y++) {
         for (let x = 0; x < evt.data.width; x++) {
 
-            let colors: Array<number> = []
+            let samples: Array<any> = []
 
             for (let i = 0; i < evt.data.samples; i++) {
                 if (!random[x][y][i]) {
@@ -426,9 +426,10 @@ _self.addEventListener( 'message', ( evt ) => {
     
                 let maxBounces = evt.data.maxBounces
     
-                let shades: Array<number> = []
+                let bounces: Array<any> = []
     
                 let objects = evt.data.objects
+                let sky = evt.data.sky
     
                 let pos = new Position(evt.data.camera.x, evt.data.camera.y, evt.data.camera.z)
                 let vector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll))
@@ -440,9 +441,10 @@ _self.addEventListener( 'message', ( evt ) => {
                     ray = castRay(pos, vector, objects, lastObject)
                     lastObject = ray.object
                     if (ray.totalDistance < maxDistance && ray.steps < maxSteps) {
-                        shades.push(ray.object.reflectivity)
+                        bounces.push({r: (ray.object.color.r/255) * ray.object.reflectivity, g: (ray.object.color.g/255) * ray.object.reflectivity, b: (ray.object.color.b/255) * ray.object.reflectivity})
                     } else {
-                        shades.push(evt.data.skyBrightness)
+                        //bounces.push(evt.data.skyBrightness)
+                        bounces.push({r: (sky.color.r/255) * sky.brightness, g: (sky.color.g/255) * sky.brightness, b: (sky.color.b/255) * sky.brightness})
                         break
                     }
                     normal = calcNormal(ray.pos, ray.object)
@@ -464,18 +466,29 @@ _self.addEventListener( 'message', ( evt ) => {
                     // pos.z += random[x][y][i] * ray.object.roughness
                 }
     
-                let shade = shades.reduce((a,b) => a * b)
+                let bounce = bounces.reduce((a,b) => {
+                    return {r: a.r * b.r, g: a.g * b.g, b: a.b * b.b}
+                })
                 
-                colors.push(shade)
+                samples.push(bounce)
             }
 
-            let color = (colors.reduce((a,b) => a + b,0) / colors.length) * 255
+            let color = (samples.reduce((a,b) => {
+                return {r: a.r + b.r, g: a.g + b.g, b: a.b + b.b}
+            })) // / samples.length) * 255
+
+            color.r /= samples.length
+            color.g /= samples.length
+            color.b /= samples.length
+            color.r *= 255
+            color.g *= 255
+            color.b *= 255
 
             let pixelindex = (y * evt.data.width + x) * 4
 
-            img.data[pixelindex]   = color
-            img.data[pixelindex+1] = color
-            img.data[pixelindex+2] = color
+            img.data[pixelindex]   = color.r
+            img.data[pixelindex+1] = color.g
+            img.data[pixelindex+2] = color.b
             img.data[pixelindex+3] = 255
 
             // img.data[pixelindex]   = Math.abs(vector.x) * 255
