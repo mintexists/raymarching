@@ -2,8 +2,9 @@
     "extends": "../tsconfig",
     "compilerOptions": {
         "lib": ["webworker", "ES2015"],
+        "sourceMap": true,
         "outDir": "../",
-        "module": "es6"
+        "module": "es6",
     },
-    "files": ["worker.ts"]
+    "files": ["worker.ts"],
 }

@@ -200,17 +200,26 @@ let objects = [
     //     position: new Position(5,0,0),
     //     radius: 1,
     // },
-    // {
-    //     type: ShapeType.sphere,
-    //     position: new Position(5,0,3),
-    //     radius: 1,
-    //     color: {r: 0, b: 255, g: 0},
-    // },
+    {
+        type: ShapeType.sphere,
+        position: new Position(5, 0, 0),
+        radius: 1,
+        roughness: 0,
+        reflectivity: .5,
+    },
     {
         type: ShapeType.box,
-        position: new Position(5, 0, 0),
-        b: new Position(1, 2, 1),
-        color: { r: 0, b: 0, g: 255 },
+        position: new Position(5, 0, 5),
+        b: new Position(10, 2, 2),
+        roughness: 0,
+        reflectivity: .9,
+    },
+    {
+        type: ShapeType.box,
+        position: new Position(5, 0, -5),
+        b: new Position(10, 2, 2),
+        roughness: 0,
+        reflectivity: .9,
     },
     // {
     //     type: ShapeType.sphere,
@@ -252,6 +261,18 @@ let objects = [
     //     },
     // },
     // {
+    //     type: ShapeType.infinite,
+    //     c: new Position(1,0,1),
+    //     object: {
+    //             type: ShapeType.box,
+    //             position: new Position(0,0,0),
+    //             b: new Position(2,0,2),
+    //             roughness: 0,
+    //     },
+    //     color: {r: 255, b: 0, g: 255},
+    //     roughness: 0,
+    // },
+    // {
     //     type: ShapeType.subtract,
     //     subtractor: {
     //         type: ShapeType.hexagonalPrism,
@@ -274,16 +295,20 @@ let objects = [
     // },
     // {
     //     type: ShapeType.plane,
-    //     position: new Position(1,0,0),
-    //     angle: {roll: 0, pitch: 90, yaw: 0 },
-    //     b: new Position(1,1),
-    //     color: {r: 255, b: 168, g: 237},
+    //     position: new Position(0,-3,0),
+    //     angle: {roll: 0, pitch: 0, yaw: 0 },
+    //     b: new Position(10,10),
+    //     //color: {r: 255, b: 168, g: 237},
+    //     roughness: 0,
+    //     reflectivity: 0.5,
     // },
     {
         type: ShapeType.infPlane,
         position: new Position(0, 0, 0),
         angle: new Position(0, 1, 0),
-        h: 1
+        h: 1,
+        roughness: 0,
+        reflectivity: 1,
     },
     //  #endregion
 ];
@@ -307,7 +332,8 @@ let roll = 0;
 let pitch = 0;
 let yaw = 0;
 let minStep = 1 / 1000;
-let bounces = 10;
+let maxBounces = 5;
+let samples = 5;
 let time = performance.now();
 let framerates = [];
 let avgMax = 10;
@@ -327,7 +353,9 @@ function draw() {
                 chunkCount: chunkCount,
                 minStep: minStep,
                 lights: lights,
-                bounces: bounces,
+                maxBounces: maxBounces,
+                samples: samples,
+                skyBrightness: skyBrightness,
                 channels: 4,
                 camera: camera,
                 objects: objects,
@@ -351,13 +379,14 @@ let sprintSpeed = 2;
 let sprinting = 1;
 let chunkStats = document.getElementById("chunkStats");
 let move = Position.zero;
+let frame;
 function main() {
     let delta = (performance.now() - time) / 1000;
-    document.getElementById("frametime").innerHTML = delta.toString();
-    delta = delta > 1 ? 1 : delta;
-    chunkStats.innerHTML = "%: ";
+    document.getElementById("frametime").innerText = delta.toString();
+    //delta = delta > 1 ? 1 : delta
+    chunkStats.innerText = "%: ";
     chunks.forEach((chunk) => {
-        chunkStats.innerHTML += `${chunk.ready ? "#" : ""}`;
+        chunkStats.innerText += `${chunk.ready ? "#" : ""}`;
     });
     move.x = 0;
     move.y = 0;
@@ -403,7 +432,7 @@ function main() {
         pitch -= 1 * rotSpeed;
     }
     draw();
-    window.requestAnimationFrame(main);
+    frame = window.requestAnimationFrame(main);
 }
 main();
 document.addEventListener('keydown', (e) => {

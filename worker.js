@@ -1,4 +1,6 @@
+importScripts("perlin.js");
 const _self = self;
+noise.seed(10);
 let img;
 let chunkCount = Math.floor(Math.sqrt(navigator.hardwareConcurrency)) || 2;
 class Position {
@@ -32,6 +34,13 @@ let rotate = (pos, yaw = 0, pitch = 0, roll = 0) => {
     let newPitch = new Position(newRoll.x * Math.cos(deg2rad(pitch)) + newRoll.y * -Math.sin(deg2rad(pitch)) + 0, newRoll.x * Math.sin(deg2rad(pitch)) + newRoll.y * Math.cos(deg2rad(pitch)) + 0, 0 + 0 + newRoll.z);
     let newYaw = new Position(newPitch.x * Math.cos(deg2rad(yaw)) + 0 + newPitch.z * Math.sin(deg2rad(yaw)), 0 + newPitch.y + 0, newPitch.x * -Math.sin(deg2rad(yaw)) + 0 + newPitch.z * Math.cos(deg2rad(yaw)));
     return newYaw;
+};
+let randomInUnitSphere = (scale = 1, x, y, i) => {
+    let theta = random[x][y][i].x * Math.PI * 2;
+    let v = random[x][y][i].y;
+    let phi = Math.acos((2 * v) - 1);
+    let r = Math.pow(random[x][y][i].z, 1 / 3);
+    return new Position(scale * r * Math.sin(phi) * Math.cos(theta), scale * r * Math.sin(phi) * Math.sin(theta), scale * r * Math.cos(phi));
 };
 var ShapeType;
 (function (ShapeType) {
@@ -99,7 +108,14 @@ let planeDist = (pos, plane) => {
     if (!plane.angle) {
         plane.angle = { roll: 0, pitch: 0, yaw: 0 };
     }
-    let p = rotate(localize(pos, plane.position), plane.angle.yaw, plane.angle.pitch, plane.angle.roll);
+    let posClone = new Position(pos.x, pos.y, pos.z);
+    let scale = 1;
+    let height = .1;
+    let add = (noise.simplex2(pos.x / scale, pos.z / scale)) * height;
+    //posClone.y += add
+    let value = 1;
+    //posClone.y = Math.round(posClone.y*value)/value
+    let p = rotate(localize(posClone, plane.position), plane.angle.yaw, plane.angle.pitch, plane.angle.roll);
     return Math.max(Math.abs(p.x) - plane.b.x, Math.abs(p.y), Math.abs(p.z) - plane.b.y);
 };
 let subtract = (pos, subtract) => {
@@ -218,11 +234,19 @@ let calcNormal = (p, obj) => {
     let yyxM = new Position(p.x - h.y, p.y - h.y, p.z - h.x);
     return normalize(new Position(calcDist(xyyP, obj) - calcDist(xyyM, obj), calcDist(yxyP, obj) - calcDist(yxyM, obj), calcDist(yyxP, obj) - calcDist(yyxM, obj)));
 };
+let calcReflect = (v, n) => {
+    let perp = 2 * dot(v, n);
+    return new Position(
+    // (v.x - (perp * n.x)),
+    // (v.y - (perp * n.y)),
+    // (v.z - (perp * n.z)),
+    (v.x - 2 * dot(v, n) * n.x), (v.y - 2 * dot(v, n) * n.y), (v.z - 2 * dot(v, n) * n.z));
+};
 let minStep = 1 / 100;
 let maxDistance = 100;
 let maxSteps = 200;
 let fov = 1.5;
-function castRay(pos, vector, objects = [], light = undefined) {
+function castRay(pos, vector, objects = [], ignore = { distance: undefined }) {
     let totalDistance = 0;
     let distance = maxDistance;
     let object;
@@ -234,18 +258,21 @@ function castRay(pos, vector, objects = [], light = undefined) {
         distance = maxDistance;
         objects.forEach(obj => {
             calcDist(rayPos, obj);
-            if (Math.abs(obj.distance) < distance) {
-                distance = Math.abs(obj.distance);
-                object = obj;
+            //if (true) {
+            if (obj.distance != ignore.distance) {
+                if (Math.abs(obj.distance) < distance) {
+                    distance = Math.abs(obj.distance);
+                    object = obj;
+                }
             }
         });
-        if (light) {
-            let dist = pythag(rayPos, light.position);
-            if (Math.abs(dist) < distance) {
-                distance = Math.abs(dist);
-                object = light;
-            }
-        }
+        // if (light) {
+        //     let dist = pythag(rayPos, light.position)
+        //     if (Math.abs(dist) < distance) {
+        //         distance = Math.abs(dist)
+        //         object = light
+        //     }
+        // }
         totalDistance += distance;
         rayPos.x += vector.x * distance;
         rayPos.y += vector.y * distance;
@@ -261,9 +288,23 @@ function castRay(pos, vector, objects = [], light = undefined) {
         totalDistance: totalDistance,
     };
 }
+let random = [];
+let genRandom = true;
 _self.addEventListener('message', (evt) => {
+    minStep = evt.data.minStep || minStep;
     if (chunkCount != evt.data.chunkCount) {
         chunkCount = evt.data.chunkCount;
+    }
+    if (genRandom) {
+        for (let y = 0; y < evt.data.height; y++) {
+            for (let x = 0; x < evt.data.width; x++) {
+                if (!random[x]) {
+                    random[x] = [];
+                }
+                random[x][y] = []; //new Position((Math.random() - .5) * 2, (Math.random() - .5) * 2, (Math.random() - .5) * 2)
+            }
+        }
+        genRandom = false;
     }
     // console.log(sphereDist(evt.data.camera, evt.data.objects[0]))
     // console.log(infPlane(evt.data.camera, evt.data.objects[1]))
@@ -272,128 +313,131 @@ _self.addEventListener('message', (evt) => {
     }
     for (let y = 0; y < evt.data.height; y++) {
         for (let x = 0; x < evt.data.width; x++) {
-            //let light = evt.data.light
-            let shade = 255;
-            evt.data.lights.forEach(light => {
-                light.level = 0;
-            });
-            let bounces = evt.data.bounces;
-            let diffuseScale = 0;
-            let initialPosition = new Position(evt.data.camera.x, evt.data.camera.y, evt.data.camera.z);
-            let initialVector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll));
-            let initialRay = castRay(initialPosition, initialVector, evt.data.objects);
-            let initialNormal = calcNormal(initialRay.pos, initialRay.object);
-            for (let i = 0; i < bounces; i++) {
-                let initialRayPos = new Position(initialRay.pos.x, initialRay.pos.y, initialRay.pos.z);
-                initialRayPos.x += ((Math.random() - .5) * 2) * diffuseScale;
-                initialRayPos.y += ((Math.random() - .5) * 2) * diffuseScale;
-                initialRayPos.z += ((Math.random() - .5) * 2) * diffuseScale;
-                let rayPos = new Position(initialRayPos.x, initialRayPos.y, initialRayPos.z);
-                rayPos.x += (initialNormal.x * minStep);
-                rayPos.y += (initialNormal.y * minStep);
-                rayPos.z += (initialNormal.z * minStep);
-                //let newVector = new Position(initialNormal.x, initialNormal.y,initialNormal.z)
-                evt.data.lights.forEach(light => {
-                    let newVector = normalize(localize(light.position, initialRayPos));
-                    let ray = castRay(rayPos, newVector, evt.data.objects, light);
-                    if (pythag(ray.pos, light.position) < minStep * 2) {
-                        light.level = 1 - (pythag(initialRayPos, light.position) / light.radius); //(light.radius - pythag(ray.pos,light.position)) / light.radius
+            let colors = [];
+            for (let i = 0; i < evt.data.samples; i++) {
+                if (!random[x][y][i]) {
+                    random[x][y][i] = new Position(Math.random(), Math.random(), Math.random());
+                }
+                let maxBounces = evt.data.maxBounces;
+                let shades = [];
+                let objects = evt.data.objects;
+                let pos = new Position(evt.data.camera.x, evt.data.camera.y, evt.data.camera.z);
+                let vector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll));
+                let ray;
+                let normal;
+                let lastObject = { distance: Infinity };
+                for (let b = 0; b < maxBounces; b++) {
+                    ray = castRay(pos, vector, objects, lastObject);
+                    lastObject = ray.object;
+                    if (ray.totalDistance < maxDistance && ray.steps < maxSteps) {
+                        shades.push(ray.object.reflectivity);
                     }
                     else {
-                        light.level = 0;
+                        shades.push(evt.data.skyBrightness);
+                        break;
                     }
-                });
+                    normal = calcNormal(ray.pos, ray.object);
+                    vector = calcReflect(vector, normal);
+                    let random = randomInUnitSphere(ray.object.roughness, x, y, i);
+                    vector.x += random.x;
+                    vector.y += random.y;
+                    vector.z += random.z;
+                    pos = ray.pos;
+                    //break
+                    // pos.x += vector.x
+                    // pos.y += vector.y
+                    // pos.z += vector.z
+                    // pos.x += normal.x * minStep
+                    // pos.y += normal.y * minStep
+                    // pos.z += normal.z * minStep
+                    // pos.x += random[x][y][i] * ray.object.roughness
+                    // pos.y += random[x][y][i] * ray.object.roughness
+                    // pos.z += random[x][y][i] * ray.object.roughness
+                }
+                let shade = shades.reduce((a, b) => a * b);
+                colors.push(shade);
             }
-            shade = (evt.data.lights.reduce((a, b) => {
-                return a + b.level;
-            }, 0) / evt.data.lights.length) * 255;
-            shade = initialRay.distance < minStep ? shade : evt.data.skyBrightness;
+            let color = (colors.reduce((a, b) => a + b, 0) / colors.length) * 255;
             let pixelindex = (y * evt.data.width + x) * 4;
-            img.data[pixelindex] = shade;
-            img.data[pixelindex + 1] = shade;
-            img.data[pixelindex + 2] = shade;
+            img.data[pixelindex] = color;
+            img.data[pixelindex + 1] = color;
+            img.data[pixelindex + 2] = color;
             img.data[pixelindex + 3] = 255;
-            // if (initialRay.distance < minStep) {
-            //                     // let rayPos = new Position(evt.data.camera.x, evt.data.camera.y, evt.data.camera.z)
-            //     // let vector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll))
-            //     // let ray = castRay(rayPos,vector,evt.data.objects)
-            //     // let normal = calcNormal(ray.pos, ray.object)
-            //     // let sky = ray.distance < minStep ? false : true
-            //     // let bounces = 1
-            //     // normal = calcNormal(ray.pos, ray.object)
-            //     // vector = normalize(localize(light, ray.pos))
-            //     // for (let i = 0; i < bounces; i++) {
-            //     //     rayPos = new Position(ray.pos.x, ray.pos.y, ray.pos.z)
-            //     //     rayPos.x += (normal.x * minStep)
-            //     //     rayPos.y += (normal.y * minStep)
-            //     //     rayPos.z += (normal.z * minStep)
-            //     //     ray = castRay(rayPos,vector,evt.data.objects,[{position: light}])
-            // // }
-            //     //shade = (totalDistance/maxDistance)//(distance * (1/minStep))
-            //     let shade = ((1 - initialRay.steps/maxSteps) ** 2) * 255
-            //     let color = {r: 255, g: 255, b: 255}
-            //     // if (firstRayObject.color != undefined) {
-            //     //     color = firstRayObject.color
-            //     // } else if (firstRayObject.altColor) {
-            //     //     color = firstRayObject.altColor
-            //     // }
-            //     // if (pythag(ray.pos,light) < minStep * 2) {
-            //     //     shade = 255
-            //     // } else {
-            //     //     shade = 255/2
-            //     // }
-            //     // //color = {r: Math.abs(normal.x)*255, g: Math.abs(normal.y)*255, b: Math.abs(normal.z)*255}
-            //     // //color = {r: normal.x*255, g: 0, b: 0}
-            //     // let light = evt.data.light
-            //     // vector = normalize(localize(light,rayPos))
-            //     // let oldPos = new Position(rayPos.x, rayPos.y, rayPos.z)
-            //     // rayPos.x += (normal.x * minStep)
-            //     // rayPos.y += (normal.y * minStep)
-            //     // rayPos.z += (normal.z * minStep)
-            //     // let minDistFromLight = 2*minStep
-            //     // totalDistance = 0
-            //     // minStep = evt.data.minStep || minStep
-            //     // distance = minStep
-            //     // steps = 0
-            //     // while (true) {
-            //     //     if (totalDistance > maxDistance || distance < minStep || steps > maxSteps) {
-            //     //         break
-            //     //     }
-            //     //     distance = maxDistance
-            //     //     evt.data.objects.forEach(obj => {
-            //     //         calcDist(rayPos, obj) 
-            //     //         if (Math.abs(obj.distance) < distance) {
-            //     //             distance = Math.abs(obj.distance)
-            //     //             smallest = obj
-            //     //         }
-            //     //     })
-            //     //     if (pythag(rayPos,light) < distance) {
-            //     //         distance = pythag(rayPos,light)
-            //     //     }
-            //     //     totalDistance += distance
-            //     //     rayPos.x += vector.x * distance
-            //     //     rayPos.y += vector.y * distance
-            //     //     rayPos.z += vector.z * distance
-            //     //     steps++
-            //     //     //debugger
-            //     // }
-            //     // if (pythag(rayPos,light) < minDistFromLight) {
-            //     //     shade = 255
-            //     // } else {
-            //     //     shade = 255/2
-            //     // }
-            //     shade = 255
-            //     // color = {r: Math.abs(normal.x)*255, g: Math.abs(normal.y)*255, b: Math.abs(normal.z)*255}
-            //     img.data[pixelindex]   = (shade - (255 - color.r))
-            //     img.data[pixelindex+1] = (shade - (255 - color.g))
-            //     img.data[pixelindex+2] = (shade - (255 - color.b))
-            //     img.data[pixelindex+3] = 255
-            // } else {
-            //     img.data[pixelindex]   = 0 * 255
-            //     img.data[pixelindex+1] = 0 * 255
-            //     img.data[pixelindex+2] = 0 * 255
-            //     img.data[pixelindex+3] = 255
+            // img.data[pixelindex]   = Math.abs(vector.x) * 255
+            // img.data[pixelindex+1] = Math.abs(vector.y) * 255
+            // img.data[pixelindex+2] = Math.abs(vector.z) * 255
+            // img.data[pixelindex+3] = 255
+            // normal = normal || new Position(0,0,0)
+            // img.data[pixelindex]   = normal.x * 255
+            // img.data[pixelindex+1] = normal.y * 255
+            // img.data[pixelindex+2] = normal.z * 255
+            // img.data[pixelindex+3] = 255
+            // //let light = evt.data.light
+            // let shade = 255
+            // evt.data.lights.forEach(light => {
+            //     light.level = [0]
+            // })
+            // let bounces = evt.data.bounces
+            // let initialPosition = new Position(evt.data.camera.x, evt.data.camera.y, evt.data.camera.z)
+            // let initialVector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll))
+            // let initialRay = castRay(initialPosition,initialVector,evt.data.objects)
+            // let initialNormal = calcNormal(initialRay.pos, initialRay.object)
+            // let diffuseScale = initialRay.object.roughness != undefined ? initialRay.object.roughness : 0
+            // for (let i = 0; i < bounces; i++) {
+            //     if (!random[x][y][i]) {
+            //         random[x][y][i] = (noise.simplex3(x, y, i))
+            //         // random[x][y][i] = new Position((Math.random() - .5) * 2, (Math.random() - .5) * 2, (Math.random() - .5) * 2)
+            //     }
+            //     let initialRayPos = new Position(initialRay.pos.x, initialRay.pos.y, initialRay.pos.z)
+            //     // initialRayPos.x += random[x][y][i].x * diffuseScale
+            //     // initialRayPos.y += random[x][y][i].y * diffuseScale
+            //     // initialRayPos.z += random[x][y][i].z * diffuseScale
+            //     // initialRayPos.x += noise.simplex3(x, y, i) * diffuseScale
+            //     // initialRayPos.y += noise.simplex3(x, y, i) * diffuseScale
+            //     // initialRayPos.z += noise.simplex3(x, y, i) * diffuseScale
+            //     // initialRayPos.x += random[x][y][i].x * diffuseScale
+            //     // initialRayPos.y += random[x][y][i].y * diffuseScale
+            //     // initialRayPos.z += random[x][y][i].z * diffuseScale
+            //     initialRayPos.x += random[x][y][i] * diffuseScale
+            //     initialRayPos.y += random[x][y][i] * diffuseScale
+            //     initialRayPos.z += random[x][y][i] * diffuseScale
+            //     // initialRayPos.x += random[x][y][i].x * diffuseScale
+            //     // initialRayPos.y += random[x][y][i].x * diffuseScale
+            //     // initialRayPos.z += random[x][y][i].x * diffuseScale
+            //     let rayPos = new Position(initialRayPos.x, initialRayPos.y, initialRayPos.z)
+            //     rayPos.x += (initialNormal.x * minStep)
+            //     rayPos.y += (initialNormal.y * minStep)
+            //     rayPos.z += (initialNormal.z * minStep)
+            //     //let newVector = new Position(initialNormal.x, initialNormal.y,initialNormal.z)
+            //     evt.data.lights.forEach(light => {
+            //         let newVector = normalize(localize(light.position, initialRayPos))
+            //         let ray = castRay(rayPos,newVector,evt.data.objects,light)
+            //         if (pythag(ray.pos,light.position) < minStep * 2) {
+            //             let level = 1 - (pythag(initialRayPos,light.position) / light.radius)
+            //             level = level < 0 ? 0 : level
+            //             light.level.push(level)
+            //             // light.level += 1 - (pythag(initialRayPos,light.position) / light.radius)
+            //         } else {
+            //             let level = 0
+            //             level = level < 0 ? 0 : level
+            //             light.level.push(0)
+            //         }
+            //     });
             // }
+            // shade = (evt.data.lights.reduce((a,b) => {
+            //     return a + (b.level.reduce((a,b) => a + b) / bounces)
+            // }, 0) / evt.data.lights.length) * 255
+            // shade += evt.data.skyBrightness * 255
+            // shade = initialRay.distance < minStep ? shade : 0
+            // 
+            // let color = {r: 255, g: 255, b: 255}
+            // if (initialRay.object.color) {
+            //     color.r = initialRay.object.color.r
+            //     color.g = initialRay.object.color.g
+            //     color.b = initialRay.object.color.b
+            // }
+            // shade = 255
+            // color = {r: Math.abs(initialNormal.x)*255, g: Math.abs(initialNormal.y)*255, b: Math.abs(initialNormal.z)*255}
         }
     }
     let bytes = new Uint8ClampedArray(img.data);
