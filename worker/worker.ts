@@ -72,6 +72,22 @@ let rotate = (pos: Position, yaw: number = 0, pitch: number = 0, roll: number = 
         newPitch.x * -Math.sin(deg2rad(yaw)) + 0 + newPitch.z * Math.cos(deg2rad(yaw)),
     )
     return newYaw
+
+    // let radYaw = deg2rad(pitch)
+    // let radPitch = deg2rad(yaw)
+    // let radRoll = deg2rad(roll)
+    // let cosYaw = Math.cos(radYaw)
+    // let sinYaw = Math.sin(radYaw)
+    // let cosPitch = Math.cos(radPitch)
+    // let sinPitch = Math.sin(radPitch)
+    // let cosRoll = Math.cos(radRoll)
+    // let sinRoll = Math.sin(radRoll)
+
+    // return new Position(
+    //     (pos.x * cosYaw * cosPitch) + (pos.y * (cosYaw * sinPitch * sinRoll - sinYaw * cosRoll)) + (pos.z * (cosYaw * sinPitch * cosRoll + sinYaw * sinRoll)),
+    //     (pos.x * cosYaw * cosPitch) + (pos.y * (sinYaw * sinPitch * sinRoll - cosYaw * cosRoll)) + (pos.z * (sinYaw * sinPitch * cosRoll + cosYaw * sinRoll)),
+    //     (pos.x * -sinPitch) + (pos.y * cosPitch * sinRoll) + (pos.z * cosPitch * cosRoll),
+    // )
 }
 
 let randomInUnitSphere = (scale: number = 1, x,y,i) => {
@@ -321,11 +337,7 @@ let calcNormal = (p: Position, obj) => { // SOMETHING IS WRONBG HELP
 }
 
 let calcReflect = (v: Position, n: Position) => {
-    let perp = 2 * dot(v,n)
     return new Position(
-        // (v.x - (perp * n.x)),
-        // (v.y - (perp * n.y)),
-        // (v.z - (perp * n.z)),
         (v.x - 2 * dot(v,n) * n.x),
         (v.y - 2 * dot(v,n) * n.y),
         (v.z - 2 * dot(v,n) * n.z),
@@ -426,13 +438,15 @@ _self.addEventListener( 'message', ( evt ) => {
     
                 let maxBounces = evt.data.maxBounces
     
-                let bounces: Array<any> = []
+                let colors: Array<any> = []
+                let lighting: Array<any> = []
     
                 let objects = evt.data.objects
                 let sky = evt.data.sky
     
                 let pos = new Position(evt.data.camera.x, evt.data.camera.y, evt.data.camera.z)
                 let vector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll))
+                let origVector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll))
                 let ray: any
                 let normal: Position
                 let lastObject = {distance: Infinity}
@@ -441,36 +455,40 @@ _self.addEventListener( 'message', ( evt ) => {
                     ray = castRay(pos, vector, objects, lastObject)
                     lastObject = ray.object
                     if (ray.totalDistance < maxDistance && ray.steps < maxSteps) {
-                        bounces.push({r: (ray.object.color.r/255) * ray.object.reflectivity, g: (ray.object.color.g/255) * ray.object.reflectivity, b: (ray.object.color.b/255) * ray.object.reflectivity})
+                        colors.push({r: (ray.object.color.r/255), g: (ray.object.color.g/255), b: (ray.object.color.b/255)})
+                        lighting.push(vector.y + (pos.y / maxDistance))
+                        // bounces.push({r: (ray.object.color.r/255) * ray.object.reflectivity, g: (ray.object.color.g/255) * ray.object.reflectivity, b: (ray.object.color.b/255) * ray.object.reflectivity})
                     } else {
-                        //bounces.push(evt.data.skyBrightness)
-                        bounces.push({r: (sky.color.r/255) * sky.brightness, g: (sky.color.g/255) * sky.brightness, b: (sky.color.b/255) * sky.brightness})
+                        colors.push({r: vector.y + (pos.y / maxDistance), g: vector.y + (pos.y / maxDistance), b: vector.y + (pos.y / maxDistance)})
+                        // bounces.push(origVector.y)
+                        // bounces.push({r: (sky.color.r/255) * sky.brightness, g: (sky.color.g/255) * sky.brightness, b: (sky.color.b/255) * sky.brightness})
                         break
                     }
                     normal = calcNormal(ray.pos, ray.object)
-                    vector = calcReflect(vector, normal)
-                    let random = randomInUnitSphere(ray.object.roughness, x, y, i)
-                    vector.x += random.x
-                    vector.y += random.y
-                    vector.z += random.z
+                    // let metalVector = calcReflect(vector, normal)
+                    //vector = calcReflect(vector, normal)
+                    vector = randomInUnitSphere(1, x, y, i)
+                    vector.x += normal.x
+                    vector.y += normal.y
+                    vector.z += normal.z
+                    vector = normalize(vector)
+
+                    // diffuseVector.x += normal.x
+                    // diffuseVector.y += normal.y
+                    // diffuseVector.z += normal.z
+                    // vector = new Position(
+                    //     (1 - ray.object.roughness)* (metalVector.x - diffuseVector.x) + diffuseVector.x,
+                    //     (1 - ray.object.roughness)* (metalVector.y - diffuseVector.y) + diffuseVector.y,
+                    //     (1 - ray.object.roughness)* (metalVector.z - diffuseVector.z) + diffuseVector.z,
+                    // )
                     pos = ray.pos
-                    //break
-                    // pos.x += vector.x
-                    // pos.y += vector.y
-                    // pos.z += vector.z
-                    // pos.x += normal.x * minStep
-                    // pos.y += normal.y * minStep
-                    // pos.z += normal.z * minStep
-                    // pos.x += random[x][y][i] * ray.object.roughness
-                    // pos.y += random[x][y][i] * ray.object.roughness
-                    // pos.z += random[x][y][i] * ray.object.roughness
                 }
     
-                let bounce = bounces.reduce((a,b) => {
+                let color = colors.reduce((a,b) => {
                     return {r: a.r * b.r, g: a.g * b.g, b: a.b * b.b}
                 })
                 
-                samples.push(bounce)
+                samples.push(color)
             }
 
             let color = (samples.reduce((a,b) => {
