@@ -1,7 +1,7 @@
 let canvas = document.getElementById("canvas") as HTMLCanvasElement
 let ctx = canvas.getContext("2d")
 
-let res = 200
+let res = 500
 
 function closestMultiple(n, x) {
     if (x > n) return x
@@ -48,6 +48,7 @@ class Chunk {
         this.y = y * chunkH
         this.ready = true
         this.worker = new Worker(worker)
+        // this.worker = new Worker(worker, {type: "module"})
         this.pixels = new ImageData(chunkW, chunkH)
 
         this.worker.addEventListener("message", (evt) => {
@@ -249,25 +250,44 @@ let objects: any = [
         position: new Position(5,0,0),
         radius: 1,
         roughness: 1,
-        reflectivity: 1,
+        reflectivity: .5,
         color: {r: 255, g: 0, b: 0},
     },
     {
         type: ShapeType.box,
         position: new Position(5,0,5),
         b: new Position(10,2,2),
-        roughness: 0,
-        reflectivity: .9,
+        roughness: 1,
+        reflectivity: .5,
         color: {r: 255, g: 255, b: 255},
     },
     {
         type: ShapeType.box,
         position: new Position(5,0,-5),
         b: new Position(10,2,2),
-        roughness: 0,
-        reflectivity: .9,
+        roughness: 1,
+        reflectivity: .5,
         color: {r: 255, g: 255, b: 255},
     },
+    {
+        type: ShapeType.plane,
+        position: new Position(0,-1,0),
+        //angle: {roll: 0, pitch: 0, yaw: 0 },
+        b: new Position(50,50),
+        roughness: 1,
+        reflectivity: .5,
+        color: {r: 255, b: 168, g: 237},
+    },
+    // {
+    //     type: ShapeType.infPlane,
+    //     position: new Position(0,0,0),
+    //     angle: new Position(0,1,0),
+    //     h: 1,
+    //     roughness: 1,
+    //     reflectivity: .5,
+    //     color: {r: 255, g: 255, b: 255},
+    // },
+
     // {
     //     type: ShapeType.sphere,
     //     position: new Position(5,2,3),
@@ -336,13 +356,6 @@ let objects: any = [
     // }
     // {
     //     type: ShapeType.plane,
-    //     position: new Position(0,-1,0),
-    //     //angle: {roll: 0, pitch: 0, yaw: 0 },
-    //     b: new Position(1,1),
-    //     color: {r: 255, b: 168, g: 237},
-    // },
-    // {
-    //     type: ShapeType.plane,
     //     position: new Position(0,-3,0),
     //     angle: {roll: 0, pitch: 0, yaw: 0 },
     //     b: new Position(10,10),
@@ -350,15 +363,6 @@ let objects: any = [
     //     roughness: 0,
     //     reflectivity: 0.5,
     // },
-    {
-        type: ShapeType.infPlane,
-        position: new Position(0,0,0),
-        angle: new Position(0,1,0),
-        h: 1,
-        roughness: 1,
-        reflectivity: .9,
-        color: {r: 255, g: 255, b: 255},
-    },
 
     //  #endregion
 ]
@@ -379,7 +383,7 @@ let lights = [
 ]
 
 let sky = {
-    brightness: 1,
+    brightness: 2,
     color: {r: 189, g: 246, b: 254},
 }
 
@@ -389,8 +393,8 @@ let pitch = 0
 let yaw   = 0
 
 let minStep = 1/1000
-let maxBounces = 1
-let samples = 1
+let maxBounces = 10
+let samples = 10
 
 let time = performance.now()
 let framerates: Array<Number> = []

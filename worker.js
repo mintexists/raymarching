@@ -49,6 +49,9 @@ let rotate = (pos, yaw = 0, pitch = 0, roll = 0) => {
     //     (pos.x * -sinPitch) + (pos.y * cosPitch * sinRoll) + (pos.z * cosPitch * cosRoll),
     // )
 };
+let mixVector = (vec1, vec2, w = 1) => {
+    return normalize(new Position((vec1.x * w) + (vec2.x * (1 - w)), (vec1.y * w) + (vec2.y * (1 - w)), (vec1.z * w) + (vec2.z * (1 - w))));
+};
 let randomInUnitSphere = (scale = 1, x, y, i) => {
     let theta = random[x][y][i].x * Math.PI * 2;
     let v = random[x][y][i].y;
@@ -253,7 +256,7 @@ let calcReflect = (v, n) => {
 };
 let minStep = 1 / 100;
 let maxDistance = 100;
-let maxSteps = 200;
+let maxSteps = Infinity;
 let fov = 1.5;
 function castRay(pos, vector, objects = [], ignore = { distance: undefined }) {
     let totalDistance = 0;
@@ -323,6 +326,8 @@ _self.addEventListener('message', (evt) => {
     for (let y = 0; y < evt.data.height; y++) {
         for (let x = 0; x < evt.data.width; x++) {
             let samples = [];
+            let light = [];
+            let normal;
             for (let i = 0; i < evt.data.samples; i++) {
                 if (!random[x][y][i]) {
                     random[x][y][i] = new Position(Math.random(), Math.random(), Math.random());
@@ -336,18 +341,19 @@ _self.addEventListener('message', (evt) => {
                 let vector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll));
                 let origVector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll));
                 let ray;
-                let normal;
+                // let normal: Position
                 let lastObject = { distance: Infinity };
                 for (let b = 0; b < maxBounces; b++) {
                     ray = castRay(pos, vector, objects, lastObject);
                     lastObject = ray.object;
                     if (ray.totalDistance < maxDistance && ray.steps < maxSteps) {
                         colors.push({ r: (ray.object.color.r / 255), g: (ray.object.color.g / 255), b: (ray.object.color.b / 255) });
-                        lighting.push(vector.y + (pos.y / maxDistance));
+                        lighting.push(ray.object.reflectivity);
                         // bounces.push({r: (ray.object.color.r/255) * ray.object.reflectivity, g: (ray.object.color.g/255) * ray.object.reflectivity, b: (ray.object.color.b/255) * ray.object.reflectivity})
                     }
                     else {
-                        colors.push({ r: vector.y + (pos.y / maxDistance), g: vector.y + (pos.y / maxDistance), b: vector.y + (pos.y / maxDistance) });
+                        colors.push({ r: evt.data.sky.color.r / 255, g: evt.data.sky.color.g / 255, b: evt.data.sky.color.b / 255 });
+                        lighting.push((vector.y + (pos.y / maxDistance)) * sky.brightness);
                         // bounces.push(origVector.y)
                         // bounces.push({r: (sky.color.r/255) * sky.brightness, g: (sky.color.g/255) * sky.brightness, b: (sky.color.b/255) * sky.brightness})
                         break;
@@ -355,11 +361,13 @@ _self.addEventListener('message', (evt) => {
                     normal = calcNormal(ray.pos, ray.object);
                     // let metalVector = calcReflect(vector, normal)
                     //vector = calcReflect(vector, normal)
-                    vector = randomInUnitSphere(1, x, y, i);
-                    vector.x += normal.x;
-                    vector.y += normal.y;
-                    vector.z += normal.z;
-                    vector = normalize(vector);
+                    let diffuse = randomInUnitSphere(1, x, y, i);
+                    diffuse.x += normal.x;
+                    diffuse.y += normal.y;
+                    diffuse.z += normal.z;
+                    diffuse = normalize(diffuse);
+                    let reflect = calcReflect(vector, normal);
+                    vector = mixVector(diffuse, reflect, ray.object.roughness);
                     // diffuseVector.x += normal.x
                     // diffuseVector.y += normal.y
                     // diffuseVector.z += normal.z
@@ -374,13 +382,18 @@ _self.addEventListener('message', (evt) => {
                     return { r: a.r * b.r, g: a.g * b.g, b: a.b * b.b };
                 });
                 samples.push(color);
+                light.push(lighting.reduce((a, b) => a * b));
             }
             let color = (samples.reduce((a, b) => {
                 return { r: a.r + b.r, g: a.g + b.g, b: a.b + b.b };
             })); // / samples.length) * 255
+            let shade = light.reduce((a, b) => a + b) / light.length;
             color.r /= samples.length;
             color.g /= samples.length;
             color.b /= samples.length;
+            color.r *= (shade);
+            color.g *= (shade);
+            color.b *= (shade);
             color.r *= 255;
             color.g *= 255;
             color.b *= 255;
@@ -389,6 +402,10 @@ _self.addEventListener('message', (evt) => {
             img.data[pixelindex + 1] = color.g;
             img.data[pixelindex + 2] = color.b;
             img.data[pixelindex + 3] = 255;
+            // img.data[pixelindex]   = shade * 255
+            // img.data[pixelindex+1] = shade * 255
+            // img.data[pixelindex+2] = shade * 255
+            // img.data[pixelindex+3] = 255
             // img.data[pixelindex]   = Math.abs(vector.x) * 255
             // img.data[pixelindex+1] = Math.abs(vector.y) * 255
             // img.data[pixelindex+2] = Math.abs(vector.z) * 255
