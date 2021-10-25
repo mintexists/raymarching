@@ -1,7 +1,11 @@
 let canvas = document.getElementById("canvas") as HTMLCanvasElement
 let ctx = canvas.getContext("2d")
 
-let res = 500
+import noise from "./perlin.js"
+
+import {Position, Rotation, ShapeType, Rotate, Sphere, Box, Torus, Plane, Subtract, Union, Intersect, Infinite} from "./classes.js"
+
+let res = 200
 
 function closestMultiple(n, x) {
     if (x > n) return x
@@ -47,8 +51,8 @@ class Chunk {
         this.x = x * chunkW
         this.y = y * chunkH
         this.ready = true
-        this.worker = new Worker(worker)
-        // this.worker = new Worker(worker, {type: "module"})
+        // this.worker = new Worker(worker)
+        this.worker = new Worker(worker, {type: "module"})
         this.pixels = new ImageData(chunkW, chunkH)
 
         this.worker.addEventListener("message", (evt) => {
@@ -71,26 +75,6 @@ let chunks: Array<Chunk> = []
 for (let y = 0; y < chunkCount; y++) {
     for (let x = 0; x < chunkCount; x++) {
         chunks.push(new Chunk(x,y))
-    }
-}
-
-class Position {
-    x: number
-    y: number
-    z: number
-
-    static zero = new Position(0,0,0)
-    static forward = new Position(1,0,0)
-    static back = new Position(-1,0,0)
-    static up = new Position(0,1,0)
-    static down = new Position(0,-1,0)
-    static left = new Position(0,0,-1)
-    static right = new Position(0,0,1)
-
-    constructor(x,y,z=0) {
-        this.x = x
-        this.y = y
-        this.z = z
     }
 }
 
@@ -121,20 +105,6 @@ let normalize = (vector: Position) => {
     let length = pythag(new Position(0,0,0), vector) || 1
 
     return new Position(vector.x / length, vector.y / length, vector.z / length)
-}
-
-enum ShapeType {
-    sphere,
-    infPlane,
-    box,
-    torus,
-    mandlebulb,
-    plane,
-    subtract,
-    union,
-    intersect,
-    infinite,
-    hexagonalPrism,
 }
 
 let objects: any = [
@@ -388,7 +358,7 @@ let sky = {
 }
 
 let camera = new Position(0,0,0)
-let roll = 0
+let roll  = 0
 let pitch = 0
 let yaw   = 0
 
@@ -433,8 +403,10 @@ function draw() {
             framerates.shift()
         }
         
-        document.getElementById("fps").innerHTML = (Math.floor(arrAvg(framerates))).toString()
+        document.getElementById("fps").innerText = (Math.floor(arrAvg(framerates))).toString()
         time = performance.now()
+
+        document.getElementById("lastFrametime").innerHTML = delta.toString()
 
         // let img = document.createElement('img');
         // img.src = canvas.toDataURL()
@@ -456,10 +428,13 @@ let frame: any
 
 function main() {
 
+    samples = (document.getElementById("samples") as HTMLInputElement).valueAsNumber
+    maxBounces = (document.getElementById("bounces") as HTMLInputElement).valueAsNumber
+
     let delta = (performance.now() - time) / 1000
     document.getElementById("frametime").innerText = delta.toString()
 
-    //delta = delta > 1 ? 1 : delta
+    delta = delta > 1 ? 1 : delta
 
     chunkStats.innerText = "%: "
 
@@ -528,6 +503,9 @@ function main() {
 main()
 
 document.addEventListener('keydown', (e) => {
+    if (e.key == "Escape") {
+        debugger
+    }
     switch (e.key.toLowerCase()) {
         case "w":
             keys.w = true

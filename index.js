@@ -1,6 +1,7 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
-let res = 500;
+import { Position, ShapeType } from "./classes.js";
+let res = 200;
 function closestMultiple(n, x) {
     if (x > n)
         return x;
@@ -33,8 +34,8 @@ class Chunk {
         this.x = x * chunkW;
         this.y = y * chunkH;
         this.ready = true;
-        this.worker = new Worker(worker);
-        // this.worker = new Worker(worker, {type: "module"})
+        // this.worker = new Worker(worker)
+        this.worker = new Worker(worker, { type: "module" });
         this.pixels = new ImageData(chunkW, chunkH);
         this.worker.addEventListener("message", (evt) => {
             this.pixels.data.set(evt.data.bytes);
@@ -55,20 +56,6 @@ for (let y = 0; y < chunkCount; y++) {
         chunks.push(new Chunk(x, y));
     }
 }
-class Position {
-    constructor(x, y, z = 0) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-}
-Position.zero = new Position(0, 0, 0);
-Position.forward = new Position(1, 0, 0);
-Position.back = new Position(-1, 0, 0);
-Position.up = new Position(0, 1, 0);
-Position.down = new Position(0, -1, 0);
-Position.left = new Position(0, 0, -1);
-Position.right = new Position(0, 0, 1);
 let rad2deg = (rad) => (180 / Math.PI) * rad;
 let deg2rad = (deg) => deg * (Math.PI / 180);
 let pythag = (pos1, pos2 = Position.zero) => Math.hypot(pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z);
@@ -81,20 +68,6 @@ let normalize = (vector) => {
     let length = pythag(new Position(0, 0, 0), vector) || 1;
     return new Position(vector.x / length, vector.y / length, vector.z / length);
 };
-var ShapeType;
-(function (ShapeType) {
-    ShapeType[ShapeType["sphere"] = 0] = "sphere";
-    ShapeType[ShapeType["infPlane"] = 1] = "infPlane";
-    ShapeType[ShapeType["box"] = 2] = "box";
-    ShapeType[ShapeType["torus"] = 3] = "torus";
-    ShapeType[ShapeType["mandlebulb"] = 4] = "mandlebulb";
-    ShapeType[ShapeType["plane"] = 5] = "plane";
-    ShapeType[ShapeType["subtract"] = 6] = "subtract";
-    ShapeType[ShapeType["union"] = 7] = "union";
-    ShapeType[ShapeType["intersect"] = 8] = "intersect";
-    ShapeType[ShapeType["infinite"] = 9] = "infinite";
-    ShapeType[ShapeType["hexagonalPrism"] = 10] = "hexagonalPrism";
-})(ShapeType || (ShapeType = {}));
 let objects = [
     // #region Shapes
     // {
@@ -378,8 +351,9 @@ function draw() {
         if (framerates.length > avgMax) {
             framerates.shift();
         }
-        document.getElementById("fps").innerHTML = (Math.floor(arrAvg(framerates))).toString();
+        document.getElementById("fps").innerText = (Math.floor(arrAvg(framerates))).toString();
         time = performance.now();
+        document.getElementById("lastFrametime").innerHTML = delta.toString();
         // let img = document.createElement('img');
         // img.src = canvas.toDataURL()
         // document.getElementById("img").appendChild(img)
@@ -393,9 +367,11 @@ let chunkStats = document.getElementById("chunkStats");
 let move = Position.zero;
 let frame;
 function main() {
+    samples = document.getElementById("samples").valueAsNumber;
+    maxBounces = document.getElementById("bounces").valueAsNumber;
     let delta = (performance.now() - time) / 1000;
     document.getElementById("frametime").innerText = delta.toString();
-    //delta = delta > 1 ? 1 : delta
+    delta = delta > 1 ? 1 : delta;
     chunkStats.innerText = "%: ";
     chunks.forEach((chunk) => {
         chunkStats.innerText += `${chunk.ready ? "#" : ""}`;
@@ -448,6 +424,9 @@ function main() {
 }
 main();
 document.addEventListener('keydown', (e) => {
+    if (e.key == "Escape") {
+        debugger;
+    }
     switch (e.key.toLowerCase()) {
         case "w":
             keys.w = true;

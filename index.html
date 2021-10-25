@@ -13,12 +13,21 @@
 <br>
 
 <div id="fps"></div><div> </div>
-<div id="frametime"></div>
+<div id="frametime"></div><div id="lastFrametime"></div>
 <div id="chunkStats"></div>
+<label for="samples">Samples: </label>
+<input type="range" id="samples" name="samples" min="1" max="50" value="5" oninput="this.nextElementSibling.value = this.value">
+<output></output>
+<br>
+<label for="bounces">Bounces: </label>
+<input type="range" id="bounces" name="bounces" min="1" max="50" value="5" oninput="this.nextElementSibling.value = this.value">
+<output></output>
+
+
 <br>
 <div id="img"></div>
 
-<script src="index.js"></script>
+<script src="index.js" type="module"></script>
 
 <style>
 

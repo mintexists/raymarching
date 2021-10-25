@@ -1,22 +1,11 @@
-importScripts("perlin.js");
+// importScripts("perlin.js")
+import noise from "../perlin.js";
+import { Position, ShapeType } from "./classes.js";
+// declare var noise
 const _self = self;
-noise.seed(10);
+// noise.seed(10);
 let img;
 let chunkCount = Math.floor(Math.sqrt(navigator.hardwareConcurrency)) || 2;
-class Position {
-    constructor(x, y, z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-}
-Position.zero = new Position(0, 0, 0);
-Position.forward = new Position(1, 0, 0);
-Position.back = new Position(-1, 0, 0);
-Position.up = new Position(0, 1, 0);
-Position.down = new Position(0, -1, 0);
-Position.left = new Position(0, 0, -1);
-Position.right = new Position(0, 0, 1);
 let rad2deg = (rad) => (180 / Math.PI) * rad;
 let deg2rad = (deg) => deg * (Math.PI / 180);
 const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
@@ -59,20 +48,6 @@ let randomInUnitSphere = (scale = 1, x, y, i) => {
     let r = Math.pow(random[x][y][i].z, 1 / 3);
     return new Position(scale * r * Math.sin(phi) * Math.cos(theta), scale * r * Math.sin(phi) * Math.sin(theta), scale * r * Math.cos(phi));
 };
-var ShapeType;
-(function (ShapeType) {
-    ShapeType[ShapeType["sphere"] = 0] = "sphere";
-    ShapeType[ShapeType["infPlane"] = 1] = "infPlane";
-    ShapeType[ShapeType["box"] = 2] = "box";
-    ShapeType[ShapeType["torus"] = 3] = "torus";
-    ShapeType[ShapeType["mandlebulb"] = 4] = "mandlebulb";
-    ShapeType[ShapeType["plane"] = 5] = "plane";
-    ShapeType[ShapeType["subtract"] = 6] = "subtract";
-    ShapeType[ShapeType["union"] = 7] = "union";
-    ShapeType[ShapeType["intersect"] = 8] = "intersect";
-    ShapeType[ShapeType["infinite"] = 9] = "infinite";
-    ShapeType[ShapeType["hexagonalPrism"] = 10] = "hexagonalPrism";
-})(ShapeType || (ShapeType = {}));
 let sphereDist = (pos, sphere) => pythag(pos, sphere.position) - sphere.radius;
 let infPlaneDist = (pos, plane) => {
     return dot(localize(pos, plane.position), normalize(plane.angle)) + plane.h;
@@ -128,7 +103,7 @@ let planeDist = (pos, plane) => {
     let posClone = new Position(pos.x, pos.y, pos.z);
     let scale = 1;
     let height = .1;
-    let add = (noise.simplex2(pos.x / scale, pos.z / scale)) * height;
+    let add = (noise(pos.x / scale, pos.z / scale)) * height;
     //posClone.y += add
     let value = 1;
     //posClone.y = Math.round(posClone.y*value)/value

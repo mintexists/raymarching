@@ -1,34 +1,18 @@
-importScripts("perlin.js")
+// importScripts("perlin.js")
 
-declare var noise
+import noise from "../perlin.js"
+
+import {Position, Rotation, ShapeType, Rotate, Sphere, Box, Torus, Plane, Subtract, Union, Intersect, Infinite} from "./classes.js"
+
+// declare var noise
 
 const _self = self as DedicatedWorkerGlobalScope;
 
-noise.seed(10);
+// noise.seed(10);
 
 let img: ImageData
 
 let chunkCount = Math.floor(Math.sqrt(navigator.hardwareConcurrency)) || 2
-
-class Position {
-    x: number
-    y: number
-    z: number
-
-    static zero = new Position(0,0,0)
-    static forward = new Position(1,0,0)
-    static back = new Position(-1,0,0)
-    static up = new Position(0,1,0)
-    static down = new Position(0,-1,0)
-    static left = new Position(0,0,-1)
-    static right = new Position(0,0,1)
-
-    constructor(x,y,z) {
-        this.x = x
-        this.y = y
-        this.z = z
-    }
-}
 
 let rad2deg = (rad: number) => (180 / Math.PI) * rad
 let deg2rad = (deg: number) => deg * (Math.PI / 180)
@@ -111,21 +95,6 @@ let randomInUnitSphere = (scale: number = 1, x,y,i) => {
    
 }
 
-enum ShapeType {
-    sphere,
-    infPlane,
-    box,
-    torus,
-    mandlebulb,
-    plane,
-    subtract,
-    union,
-    intersect,
-    infinite,
-    hexagonalPrism,
-}
-
-
 let sphereDist = (pos: Position, sphere) => pythag(pos, sphere.position) - sphere.radius
 
 let infPlaneDist = (pos: Position, plane) => {
@@ -184,7 +153,7 @@ let planeDist = (pos: Position, plane) => {
 
     let scale = 1
     let height = .1
-    let add = (noise.simplex2(pos.x / scale, pos.z / scale)) * height
+    let add = (noise(pos.x / scale, pos.z / scale)) * height
 
     //posClone.y += add
 
