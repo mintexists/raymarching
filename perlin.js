@@ -538,12 +538,10 @@ export default function noise(x, y, z, w) {
 		break;
 		case 2:
 		  return noise2(x, y); //todo: move these to perlin functions
-		break;
 		case 3:
 		  return noise3(x, y, z);
-	  case 3:
-		return noise4(x, y, z, w);
-		break;
+        case 4:
+            return noise4(x, y, z, w);
 	}
 }
 

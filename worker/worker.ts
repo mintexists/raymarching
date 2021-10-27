@@ -1,14 +1,8 @@
-// importScripts("perlin.js")
-
 import noise from "../perlin.js"
 
-import {Position, Rotation, ShapeType, Rotate, Sphere, Box, Torus, Plane, Subtract, Union, Intersect, Infinite} from "./classes.js"
-
-// declare var noise
+import {Position, Rotation, Shader, Color, ShapeType, Rotate, Sphere, Box, Torus, Plane, Subtract, Union, Intersect, Infinite, processObjects} from "./classes.js"
 
 const _self = self as DedicatedWorkerGlobalScope;
-
-// noise.seed(10);
 
 let img: ImageData
 
@@ -307,9 +301,12 @@ let calcNormal = (p: Position, obj) => { // SOMETHING IS WRONBG HELP
     let yyxP = new Position(p.x + h.y, p.y + h.y, p.z + h.x)
     let yyxM = new Position(p.x - h.y, p.y - h.y, p.z - h.x)
     return normalize(new Position(
-        calcDist(xyyP, obj) - calcDist(xyyM, obj),
-        calcDist(yxyP, obj) - calcDist(yxyM, obj),
-        calcDist(yyxP, obj) - calcDist(yyxM, obj),
+        // calcDist(xyyP, obj) - calcDist(xyyM, obj),
+        // calcDist(yxyP, obj) - calcDist(yxyM, obj),
+        // calcDist(yyxP, obj) - calcDist(yyxM, obj),
+        obj.distance(xyyP) - obj.distance(xyyM),
+        obj.distance(yxyP) - obj.distance(yxyM),
+        obj.distance(yyxP) - obj.distance(yyxM),
     ))
 }
 
@@ -321,12 +318,22 @@ let calcReflect = (v: Position, n: Position) => {
     )
 }
 
+let calcRefract = (v: Position, n: Position, n1: number, n2: number) => {
+    let c = dot(new Position(-n.x, -n.y, -n.z), v)
+    let r = n1/n2
+    return new Position(
+        r * v.x + (r * c - Math.sqrt(1 - Math.pow(r, 2) * (1 - Math.pow(c,2)))) * n.x,
+        r * v.y + (r * c - Math.sqrt(1 - Math.pow(r, 2) * (1 - Math.pow(c,2)))) * n.y,
+        r * v.z + (r * c - Math.sqrt(1 - Math.pow(r, 2) * (1 - Math.pow(c,2)))) * n.z,
+    )
+}
+
 let minStep = 1/100
 let maxDistance = 100
 let maxSteps = Infinity
 let fov = 1.5
 
-function castRay(pos: Position, vector: Position, objects: Array<any> = [], ignore: any = {distance: undefined}) {
+function castRay(pos: Position, vector: Position, objects: Array<any> = [], ignore: any = undefined, i: any) {
     let totalDistance = 0
     let distance = maxDistance
     let object
@@ -335,14 +342,18 @@ function castRay(pos: Position, vector: Position, objects: Array<any> = [], igno
     let normal: Position
     let steps = 0
 
-    while (!(totalDistance > maxDistance || distance < minStep || steps > maxSteps)) {
+    do {
+    // while (!(totalDistance > maxDistance || distance < minStep || steps > maxSteps)) {
         distance = maxDistance
+        let ignoreDist = Infinity
+        if (ignore) {
+            ignoreDist = ignore.distance(rayPos)
+        }
         objects.forEach(obj => {
-            calcDist(rayPos, obj)
-            //if (true) {
-            if (obj.distance != ignore.distance) {
-                if (Math.abs(obj.distance) < distance) {
-                    distance = Math.abs(obj.distance)
+            let objDist = obj.distance(rayPos)
+            if (objDist != ignoreDist) {
+                if (Math.abs(objDist) < distance && Math.random() < obj.shader.density) {
+                    distance = Math.abs(objDist)
                     object = obj
                 }
             }
@@ -351,7 +362,7 @@ function castRay(pos: Position, vector: Position, objects: Array<any> = [], igno
         // if (light) {
         //     let dist = pythag(rayPos, light.position)
         //     if (Math.abs(dist) < distance) {
-        //         distance = Math.abs(dist)
+        //         distance = Math.abs(dist) 
         //         object = light
         //     }
         // }
@@ -362,7 +373,7 @@ function castRay(pos: Position, vector: Position, objects: Array<any> = [], igno
         rayPos.z += vector.z * distance
 
         steps ++
-    }
+    } while (!(totalDistance > maxDistance || distance < minStep || steps > maxSteps))
     return {
         object: object,
         normal: normal,
@@ -377,6 +388,8 @@ let random: Array<Array<Array<any>>> = []
 let genRandom = true
 
 _self.addEventListener( 'message', ( evt ) => {
+
+    let objects = processObjects(evt.data.objects)
 
     minStep = evt.data.minStep || minStep
 
@@ -416,11 +429,11 @@ _self.addEventListener( 'message', ( evt ) => {
                 }
     
                 let maxBounces = evt.data.maxBounces
+                maxDistance = evt.data.maxDistance
     
                 let colors: Array<any> = []
                 let lighting: Array<any> = []
     
-                let objects = evt.data.objects
                 let sky = evt.data.sky
     
                 let pos = new Position(evt.data.camera.x, evt.data.camera.y, evt.data.camera.z)
@@ -428,20 +441,23 @@ _self.addEventListener( 'message', ( evt ) => {
                 let origVector = normalize(rotate(new Position(1, -(((y + evt.data.y) / (evt.data.height) / chunkCount) - .5) * fov, (((x + evt.data.x) / (evt.data.width) / chunkCount) - .5) * fov), evt.data.yaw, evt.data.pitch, evt.data.roll))
                 let ray: any
                 // let normal: Position
-                let lastObject = {distance: Infinity}
+                let lastObject
+                let refractObject
+                let lastIOR = 1
     
                 for (let b = 0; b < maxBounces; b++) {
-                    ray = castRay(pos, vector, objects, lastObject)
+                    ray = castRay(pos, vector, objects, lastObject, [x,y,i])
                     lastObject = ray.object
-                    if (ray.totalDistance < maxDistance && ray.steps < maxSteps) {
-                        colors.push({r: (ray.object.color.r/255), g: (ray.object.color.g/255), b: (ray.object.color.b/255)})
-                        lighting.push(ray.object.reflectivity)
-                        // bounces.push({r: (ray.object.color.r/255) * ray.object.reflectivity, g: (ray.object.color.g/255) * ray.object.reflectivity, b: (ray.object.color.b/255) * ray.object.reflectivity})
+                    // console.log(ray)
+                    // debugger
+                    // if (true) {
+                    // if (ray.totalDistance < maxDistance && ray.steps < maxSteps) {
+                    if (ray.distance < minStep) {
+                        colors.push({r: (ray.object.shader.color.r/255), g: (ray.object.shader.color.g/255), b: (ray.object.shader.color.b/255)})
+                        lighting.push(1 - ray.object.shader.absorbtion)
                     } else {
                         colors.push({r: evt.data.sky.color.r/255, g: evt.data.sky.color.g/255, b: evt.data.sky.color.b/255})
                         lighting.push((vector.y + (pos.y / maxDistance)) * sky.brightness)
-                        // bounces.push(origVector.y)
-                        // bounces.push({r: (sky.color.r/255) * sky.brightness, g: (sky.color.g/255) * sky.brightness, b: (sky.color.b/255) * sky.brightness})
                         break
                     }
                     normal = calcNormal(ray.pos, ray.object)
@@ -453,18 +469,20 @@ _self.addEventListener( 'message', ( evt ) => {
                     diffuse.z += normal.z
                     diffuse = normalize(diffuse)
 
-                    let reflect = calcReflect(vector, normal)
+                    let reflect = normalize(calcReflect(vector, normal))
 
-                    vector = mixVector(diffuse, reflect, ray.object.roughness)
+                    if (random[x][y][i].x < ray.object.shader.transmission) {
 
-                    // diffuseVector.x += normal.x
-                    // diffuseVector.y += normal.y
-                    // diffuseVector.z += normal.z
-                    // vector = new Position(
-                    //     (1 - ray.object.roughness)* (metalVector.x - diffuseVector.x) + diffuseVector.x,
-                    //     (1 - ray.object.roughness)* (metalVector.y - diffuseVector.y) + diffuseVector.y,
-                    //     (1 - ray.object.roughness)* (metalVector.z - diffuseVector.z) + diffuseVector.z,
-                    // )
+                        // vector = calcRefract(vector, new Position(-normal.x, -normal.y, -normal.z), ray.object.shader.ior, 1)
+                        vector = calcRefract(vector, normal, lastIOR, ray.object.shader.ior)
+
+                        // refractObject = JSON.stringify(ray.object)
+                        lastIOR = ray.object.shader.ior
+
+                    } else {
+                        vector = mixVector(diffuse, reflect, ray.object.shader.roughness)
+                    }
+
                     pos = ray.pos
                 }
     
@@ -596,10 +614,10 @@ _self.addEventListener( 'message', ( evt ) => {
 
             // let color = {r: 255, g: 255, b: 255}
 
-            // if (initialRay.object.color) {
-            //     color.r = initialRay.object.color.r
-            //     color.g = initialRay.object.color.g
-            //     color.b = initialRay.object.color.b
+            // if (initialray.object.shader.color) {
+            //     color.r = initialray.object.shader.color.r
+            //     color.g = initialray.object.shader.color.g
+            //     color.b = initialray.object.shader.color.b
             // }
 
             // shade = 255

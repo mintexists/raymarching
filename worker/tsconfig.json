@@ -5,6 +5,7 @@
         "sourceMap": true,
         "outDir": "../",
         "module": "es6",
+        "declaration": true,
     },
-    "files": ["worker.ts"],
+    "files": ["worker.ts", "classes.ts"],
 }

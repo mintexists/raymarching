@@ -3,7 +3,9 @@ let ctx = canvas.getContext("2d")
 
 import noise from "./perlin.js"
 
-import {Position, Rotation, ShapeType, Rotate, Sphere, Box, Torus, Plane, Subtract, Union, Intersect, Infinite} from "./classes.js"
+import {Position, Rotation, Shader, Color, ShapeType, Rotate, Sphere, Box, Torus, Plane, Subtract, Union, Intersect, Infinite, processObjects} from "./classes.js"
+import { createBuilderStatusReporter } from "../../../node_modules/typescript/lib/typescript.js"
+import { SHARE_ENV } from "worker_threads"
 
 let res = 200
 
@@ -108,248 +110,13 @@ let normalize = (vector: Position) => {
 }
 
 let objects: any = [
-    // #region Shapes
-    // {
-    //     type: ShapeType.infPlane,
-    //     position: new Position(0,0,0),
-    //     angle: new Position(0,1,0),
-    //     h: .5,
-    //     color: {r: 181, g: 208, b: 224},
-    // },
-    // {
-    //     type: ShapeType.box,
-    //     position: new Position(0,0,0),
-    //     angle: new Position(1,1,1),
-    //     b: new Position(50,50,50),
-    //     //color: {r: 0, b: 0, g: 0}
-    // },
-    // {
-    //     type: ShapeType.box,
-    //     position: new Position(5,0,0),
-    //     //angle: {roll: 0, pitch: 0, yaw: 0 },
-    //     b: new Position(1,1,1),
-    //     color: {r: 255, b: 168, g: 237},
-    // },
-    // {
-    //     type: ShapeType.plane,
-    //     position: new Position(5,-1,0),
-    //     //angle: {roll: 0, pitch: 0, yaw: 0 },
-    //     b: new Position(50,50),
-    //     color: {r: 255, b: 168, g: 237},
-    // },
-    //
-    // {
-    //     type: ShapeType.subtract,
-    //     subtractor: {
-    //         type: ShapeType.sphere,
-    //         position: new Position(5,.5,-3),
-    //         radius: 1,
-    //         color: {r: 1, b: 1, g: 1}
-    //     },
-    //     subtractee: {
-    //         type: ShapeType.box,
-    //         position: new Position(5,0,-3),
-    //         //angle: {roll: 0, pitch: 0, yaw: 0 
-    //         b: new Position(1,1,1),
-    //         color: {r: 255, b: 168, g: 237},
-    //     },
-    // },
-    // {
-    //     type: ShapeType.union,
-    //     first: {
-    //         type: ShapeType.sphere,
-    //         position: new Position(5,.5,0),
-    //         radius: 1,
-    //         color: {r: 1, b: 1, g: 1}
-    //     },
-    //     second: {
-    //         type: ShapeType.box,
-    //         position: new Position(5,0,0),
-    //         //angle: {roll: 0, pitch: 0, yaw: 0 
-    //         b: new Position(1,1,1),
-    //         color: {r: 255, b: 168, g: 237},
-    //     },
-    // },
-    // {
-    //     type: ShapeType.intersect,
-    //     first: {
-    //         type: ShapeType.sphere,
-    //         position: new Position(5,.5,3),
-    //         radius: 1,
-    //         color: {r: 1, b: 1, g: 1}
-    //     },
-    //     second: {
-    //         type: ShapeType.box,
-    //         position: new Position(5,0,3),
-    //         //angle: {roll: 0, pitch: 0, yaw: 0 
-    //         b: new Position(1,1,1),
-    //         color: {r: 255, b: 168, g: 237},
-    //     },
-    // },
-    // {
-    //     type: ShapeType.torus,
-    //     position: new Position(5,0,0),
-    //     angle: {roll: 45, pitch: 0, yaw: 0 },
-    //     minor: .5,//new Position(1,1,0),
-    //     major: 1,
-    //     color: {r: 255, b: 168, g: 237},
-    // },
-    // {
-    //     type: ShapeType.mandlebulb,
-    //     position: new Position(3,0,0),
-    //     power: 2,
-    //     iterations: 10,
-    //     angle: {roll: 0, pitch:0, yaw: 0},
-    //     color: {r: 255, b: 168, g: 237},
-    //     roughness: 1,
-    //     reflectivity: 1,
-    // },
-    // {
-    //     type: ShapeType.sphere,
-    //     position: new Position(5,0,-3),
-    //     radius: 1,
-    //     color: {r: 255, b: 0, g: 0}, 
-    // },
-    // {
-    //     type: ShapeType.sphere,
-    //     position: new Position(5,0,0),
-    //     radius: 1,
-    // },
-    {
-        type: ShapeType.sphere,
-        position: new Position(5,0,0),
-        radius: 1,
-        roughness: 1,
-        reflectivity: .5,
-        color: {r: 255, g: 0, b: 0},
-    },
-    {
-        type: ShapeType.box,
-        position: new Position(5,0,5),
-        b: new Position(10,2,2),
-        roughness: 1,
-        reflectivity: .5,
-        color: {r: 255, g: 255, b: 255},
-    },
-    {
-        type: ShapeType.box,
-        position: new Position(5,0,-5),
-        b: new Position(10,2,2),
-        roughness: 1,
-        reflectivity: .5,
-        color: {r: 255, g: 255, b: 255},
-    },
-    {
-        type: ShapeType.plane,
-        position: new Position(0,-1,0),
-        //angle: {roll: 0, pitch: 0, yaw: 0 },
-        b: new Position(50,50),
-        roughness: 1,
-        reflectivity: .5,
-        color: {r: 255, b: 168, g: 237},
-    },
-    // {
-    //     type: ShapeType.infPlane,
-    //     position: new Position(0,0,0),
-    //     angle: new Position(0,1,0),
-    //     h: 1,
-    //     roughness: 1,
-    //     reflectivity: .5,
-    //     color: {r: 255, g: 255, b: 255},
-    // },
-
-    // {
-    //     type: ShapeType.sphere,
-    //     position: new Position(5,2,3),
-    //     radius: .5,
-    //     color: {r: 0, b: 255, g: 0},
-    // },
-    // {
-    //     type: ShapeType.infinite,
-    //     c: new Position(4,0,4),
-    //     object: {
-    //         type: ShapeType.torus,
-    //         position: new Position(0,0,0),
-    //         minor: .5,
-    //         major: 1,
-    //         color: {r: 241, g: 209, b: 162},
-    //     },
-    // },
-    // {
-    //     type: ShapeType.infinite,
-    //     c: new Position(4,0,4),
-    //     object: {
-    //         type: ShapeType.subtract,
-    //         subtractor: {
-    //             type: ShapeType.torus,
-    //             position: new Position(0,0,0),
-    //             minor: .5,
-    //             major: 1,
-    //             color: {r: 241, g: 209, b: 162},
-
-    //         },
-    //         subtractee: {
-    //             type: ShapeType.torus,
-    //             position: new Position(0,.1,0),
-    //             minor: .5,
-    //             major: 1,
-    //             color: {r: 245, g: 159, b: 192},
-    //         },
-    //         //color: {r: 0, g: 0, b: 255}
-    //     },
-    // },
-    // {
-    //     type: ShapeType.infinite,
-    //     c: new Position(1,0,1),
-    //     object: {
-    //             type: ShapeType.box,
-    //             position: new Position(0,0,0),
-    //             b: new Position(2,0,2),
-    //             roughness: 0,
-    //     },
-    //     color: {r: 255, b: 0, g: 255},
-    //     roughness: 0,
-    // },
-    // {
-    //     type: ShapeType.subtract,
-    //     subtractor: {
-    //         type: ShapeType.hexagonalPrism,
-    //         position: new Position(0,10),
-    //         h: new Position(20,10),
-    //         color: {r: 200, g: 200, b: 200}
-    //     },
-    //     subtractee: {
-    //         type: ShapeType.box,
-    //         position: new Position(0,5,0),
-    //         b: new Position(20,20,20)
-    //     }
-    // }
-    // {
-    //     type: ShapeType.plane,
-    //     position: new Position(0,-3,0),
-    //     angle: {roll: 0, pitch: 0, yaw: 0 },
-    //     b: new Position(10,10),
-    //     //color: {r: 255, b: 168, g: 237},
-    //     roughness: 0,
-    //     reflectivity: 0.5,
-    // },
-
-    //  #endregion
-]
-
-let lights = [
-    {
-        position: new Position(8,3,0),
-        radius: 10,
-    },
-    {
-        position: new Position(5,3,3),
-        radius: 10,
-    },
-    {
-        position: new Position(5,5,0),
-        radius: 10,
-    },
+    // new Sphere(new Position(5,0,0),    1, new Shader(0, 0, new Color(255,255,255), 1, 1, 1.52)),
+    // new Rotate(new Box(new Position(5,0,0), new Position(1,1,1), new Shader(1, 0, new Color(255,255,255))), new Rotation(45,0,0)),
+    // new Sphere(new Position(6.5,0,0),  1, new Shader(0, 0, new Color(255,255,255), 1, 1, 1.52)),
+    // new Sphere(new Position(5,0,0), .9, new Shader(0, 0, new Color(255,255,255), 1, 1, 1)),
+    // new Torus(new Position(5,0,0), 1, .5, new Shader(0, 0, new Color(255,255,255), 1, .5)),
+    new Plane(new Position(0,-1,0), new Position(Infinity,Infinity)),
+    // new Subtract(new Sphere(new Position(5,0,0), .8), new Sphere(new Position(5,0,0), 1), new Shader(0, 0, new Color(255,255,255), 1, 1, 1.52))
 ]
 
 let sky = {
@@ -365,6 +132,7 @@ let yaw   = 0
 let minStep = 1/1000
 let maxBounces = 10
 let samples = 10
+let maxDistance = 100
 
 let time = performance.now()
 let framerates: Array<Number> = []
@@ -386,8 +154,8 @@ function draw() {
                 roll: roll,
                 chunkCount: chunkCount,
                 minStep: minStep,
-                lights: lights,
                 maxBounces: maxBounces,
+                maxDistance: maxDistance,
                 samples: samples,
                 sky: sky,
                 channels: 4,
@@ -430,6 +198,7 @@ function main() {
 
     samples = (document.getElementById("samples") as HTMLInputElement).valueAsNumber
     maxBounces = (document.getElementById("bounces") as HTMLInputElement).valueAsNumber
+    maxDistance = (document.getElementById("maxDistance") as HTMLInputElement).valueAsNumber
 
     let delta = (performance.now() - time) / 1000
     document.getElementById("frametime").innerText = delta.toString()

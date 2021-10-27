@@ -1,3 +1,6 @@
+import { json } from "stream/consumers"
+import { SHARE_ENV } from "worker_threads"
+
 let pythag = (pos1: Position, pos2: Position=Position.zero) => Math.hypot(pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z)
 
 let localize = (pos1: Position, pos2: Position) => new Position(pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z)
@@ -56,6 +59,36 @@ export class Rotation {
     }
 }
 
+export class Color {
+    r: number
+    g: number
+    b: number
+
+    constructor(r: number, g: number, b: number) {
+        this.r = r
+        this.g = g
+        this.b = b
+    }
+}
+
+export class Shader {
+    color: Color
+    roughness: number
+    absorbtion: number
+    density: number
+    transmission: number
+    ior: number
+
+    constructor(roughness: number, absorbtion: number, color: Color = new Color(255,255,255), density: number = 1, transmission: number = 0, ior: number = 1) {
+        this.color = color
+        this.roughness = roughness
+        this.absorbtion = absorbtion
+        this.density = density
+        this.transmission = transmission
+        this.ior = ior
+    }
+}
+
 export enum ShapeType {
     sphere, // finyished UwU
     infPlane, // Deprecate this please uwu
@@ -68,19 +101,23 @@ export enum ShapeType {
     intersect, // finyished UwU
     infinite, // finyished UwU
     hexagonalPrism,
+    rotate,
 }
 
 export class Rotate {
+    type = ShapeType.rotate
     rotation: Rotation
     object: any
+    shader: Shader
 
     constructor(object: any, rotation: Rotation) {
         this.object = object
         this.rotation = rotation
+        this.shader = this.object.shader
     }
 
     distance(pos: Position) {
-        this.object.distance(rotate(pos, this.rotation))
+        return this.object.distance(rotate(pos, this.rotation))
     }
 }
 
@@ -88,14 +125,16 @@ export class Sphere {
     type = ShapeType.sphere
     position: Position
     radius: number
+    shader: Shader
     
-    constructor (position: Position, radius: number) {
+    constructor (position: Position, radius: number, shader: Shader = new Shader(1, .5)) {
         this.position = position
         this.radius = radius
+        this.shader = shader
     }
 
     distance(pos: Position) {
-        pythag(pos, this.position) - this.radius
+        return pythag(pos, this.position) - this.radius
     }
 }
 
@@ -103,10 +142,17 @@ export class Box {
     type = ShapeType.box
     position: Position
     shape: Position
+    shader: Shader
 
-    constructor (position: Position, shape: Position) {
+    constructor (position: Position, shape: Position, shader: Shader = new Shader(1, .5)) {
         this.position = position
         this.shape = shape
+        this.shader = shader
+    }
+
+    distance(pos: Position) {
+        let p = localize(pos, this.position)
+        return Math.max(Math.abs(p.x) - this.shape.x, Math.abs(p.y) - this.shape.y, Math.abs(p.z) - this.shape.z)
     }
 }
 
@@ -115,10 +161,12 @@ export class Torus {
     position: Position
     major: number
     minor: number
+    shader: Shader
 
-    constructor (position: Position, major: number, minor: number) {
+    constructor (position: Position, major: number, minor: number, shader: Shader = new Shader(1, .5)) {
         this.position = position
         this.major = major
+        this.shader = shader
         this.minor = minor
     }
 
@@ -133,10 +181,12 @@ export class Plane {
     type = ShapeType.plane
     position: Position
     shape: Position
+    shader: Shader
     
-    constructor(position: Position, shape: Position) {
+    constructor(position: Position, shape: Position, shader: Shader = new Shader(1, .5)) {
         this.position = position
         this.shape = shape
+        this.shader = shader
     }
 
     distance(pos: Position) {
@@ -146,63 +196,92 @@ export class Plane {
 }
 
 export class Subtract {
+    type = ShapeType.subtract
     subtractor: any
     subtractee: any
+    shader: Shader
 
-    constructor(subtractor: any, subtractee: any) {
+    constructor(subtractor: any, subtractee: any, shader: Shader = new Shader(1, .5)) {
         this.subtractor = subtractor
         this.subtractee = subtractee
+        this.shader = shader
     }
 
     distance(pos: Position) {
-        return Math.max(
-            -this.subtractor.distance(pos),
-            this.subtractee.distance(pos)
-        )
+        let a = -this.subtractor.distance(pos)
+        let b = this.subtractee.distance(pos)
+        let c = Math.max(a,b)
+        // if (c == a) {
+        //     this.shader = new Shader(this.subtractor.shader.roughness, this.subtractor.shader.absorbtion, this.subtractor.shader.color)
+        // } else {
+        //     this.shader = new Shader(this.subtractee.shader.roughness, this.subtractee.shader.absorbtion, this.subtractee.shader.color)
+        // }
+        // this.shader = new Shader(this.subtractor.shader.roughness, this.subtractor.shader.absorbtion, this.subtractor.shader.color)
+        // this.shader = this.subtractee.shader
+        return c
     }
 }
 
 export class Union {
+    type = ShapeType.union
     first: any
     second: any
+    shader: Shader
 
-    constructor(first: any, second: any) {
+    constructor(first: any, second: any, shader: Shader = new Shader(1, .5)) {
         this.first = first
         this.second = second
+        this.shader = shader
     }
 
     distance(pos: Position) {
-        return Math.min(
-            this.first.distance(pos),
-            this.second.distance(pos)
-        )
+        let a = this.first.distance(pos)
+        let b = this.second.distance(pos)
+        let c = Math.min(a,b)
+        if (c == a) {
+            this.shader = new Shader(this.first.shader.roughness, this.first.shader.absorbtion, this.first.shader.color)
+        } else {
+            this.shader = new Shader(this.second.shader.roughness, this.second.shader.absorbtion, this.second.shader.color)
+        }
+        return c
     }
 }
 
 export class Intersect {
+    type = ShapeType.intersect
     first: any
     second: any
+    shader: Shader
 
-    constructor(first: any, second: any) {
+    constructor(first: any, second: any, shader: Shader = new Shader(1, .5)) {
         this.first = first
         this.second = second
+        this.shader = shader
     }
 
     distance(pos: Position) {
-        return Math.max(
-            this.first.distance(pos),
-            this.second.distance(pos)
-        )
+        let a = this.first.distance(pos)
+        let b = this.second.distance(pos)
+        let c = Math.max(a,b)
+        if (c == a) {
+            this.shader = new Shader(this.first.shader.roughness, this.first.shader.absorbtion, this.first.shader.color)
+        } else {
+            this.shader = new Shader(this.second.shader.roughness, this.second.shader.absorbtion, this.second.shader.color)
+        }
+        return c
     }
 }
 
 export class Infinite {
+    type = ShapeType.infinite
     offset: Position
     object: any
+    shader: Shader
 
-    constructor(offset: Position, object: any) {
+    constructor(offset: Position, object: any, shader: Shader = new Shader(1, .5)) {
         this.object = object
         this.offset = offset
+        this.shader = shader
     }
 
     distance(pos: Position) {
@@ -211,6 +290,41 @@ export class Infinite {
         q.y = this.offset.y == 0 ? pos.y : q.y
         q.z = this.offset.z == 0 ? pos.z : q.z
 
+        this.shader = new Shader(this.object.shader.roughness, this.object.shader.absorbtion, this.object.shader.color)
+
         return this.object.distance(q)
+    }
+}
+
+export function processObjects(json) {
+    let objects: Array<any> = []
+    json.forEach(object => {
+        objects.push(jsonToObject(object))
+    });
+    return objects
+}
+
+function jsonToObject(object) {
+    switch (object.type) {
+        case ShapeType.sphere:
+            return new Sphere(object.position, object.radius, object.shader)
+        case ShapeType.box:
+            return new Box(object.position, object.shape, object.shader)
+        case ShapeType.torus:
+            return new Torus(object.position, object.major, object.minor, object.shader)
+        case ShapeType.plane:
+            return new Plane(object.position, object.shape, object.shader)
+        case ShapeType.subtract:
+            return new Subtract(jsonToObject(object.subtractor), jsonToObject(object.subtractee), object.shader)
+        case ShapeType.union:
+            return new Union(jsonToObject(object.first), jsonToObject(object.second))
+        case ShapeType.intersect:
+            return new Intersect(jsonToObject(object.first), jsonToObject(object.second))
+        case ShapeType.infinite:
+            return new Infinite(object.offset, jsonToObject(object.object))
+        case ShapeType.rotate:
+            return new Rotate(jsonToObject(object.object), object.rotation)
+        default:
+            break;
     }
 }

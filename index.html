@@ -17,12 +17,21 @@
 <div id="chunkStats"></div>
 <label for="samples">Samples: </label>
 <input type="range" id="samples" name="samples" min="1" max="50" value="5" oninput="this.nextElementSibling.value = this.value">
-<output></output>
-<br>
+<output>5</output>
+
+<span> | </span>
+
 <label for="bounces">Bounces: </label>
 <input type="range" id="bounces" name="bounces" min="1" max="50" value="5" oninput="this.nextElementSibling.value = this.value">
-<output></output>
+<output>5</output>
 
+<span> | </span>
+
+<label for="maxDistance">Max Distance: </label>
+<input type="range" id="maxDistance" name="maxDistance" min="50" max="500" value="100" oninput="this.nextElementSibling.value = this.value">
+<output>100</output>
+
+<span> | </span>
 
 <br>
 <div id="img"></div>
