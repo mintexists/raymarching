@@ -1,6 +1,6 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
-import { Position, Plane } from "./classes.js";
+import { Position, Rotation, Shader, Color, Rotate, Box, Plane } from "./classes.js";
 let res = 200;
 function closestMultiple(n, x) {
     if (x > n)
@@ -70,7 +70,7 @@ let normalize = (vector) => {
 };
 let objects = [
     // new Sphere(new Position(5,0,0),    1, new Shader(0, 0, new Color(255,255,255), 1, 1, 1.52)),
-    // new Rotate(new Box(new Position(5,0,0), new Position(1,1,1), new Shader(1, 0, new Color(255,255,255))), new Rotation(45,0,0)),
+    new Rotate(new Box(new Position(5, 0, 0), new Position(1, 1, 1), new Shader(1, 0, new Color(255, 255, 255), 1, 1, 1.52)), new Rotation(0, 0, 0)),
     // new Sphere(new Position(6.5,0,0),  1, new Shader(0, 0, new Color(255,255,255), 1, 1, 1.52)),
     // new Sphere(new Position(5,0,0), .9, new Shader(0, 0, new Color(255,255,255), 1, 1, 1)),
     // new Torus(new Position(5,0,0), 1, .5, new Shader(0, 0, new Color(255,255,255), 1, .5)),

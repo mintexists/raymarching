@@ -300,9 +300,13 @@ _self.addEventListener('message', (evt) => {
                     random[x] = [];
                 }
                 random[x][y] = []; //new Position((Math.random() - .5) * 2, (Math.random() - .5) * 2, (Math.random() - .5) * 2)
+                // This is fucked up gotta make it sasve the thingy
+                for (let i = 0; i < Math.max(evt.data.samples, evt.data.maxBounces); i++) {
+                    random[x][y][i] = new Position(Math.random(), Math.random(), Math.random());
+                }
             }
         }
-        genRandom = false;
+        genRandom = true;
     }
     // console.log(sphereDist(evt.data.camera, evt.data.objects[0]))
     // console.log(infPlane(evt.data.camera, evt.data.objects[1]))
@@ -315,9 +319,9 @@ _self.addEventListener('message', (evt) => {
             let light = [];
             let normal;
             for (let i = 0; i < evt.data.samples; i++) {
-                if (!random[x][y][i]) {
-                    random[x][y][i] = new Position(Math.random(), Math.random(), Math.random());
-                }
+                // if (!random[x][y][i]) {
+                //     random[x][y][i] = new Position(Math.random(), Math.random(), Math.random())
+                // }
                 let maxBounces = evt.data.maxBounces;
                 maxDistance = evt.data.maxDistance;
                 let colors = [];
@@ -356,11 +360,37 @@ _self.addEventListener('message', (evt) => {
                     diffuse.z += normal.z;
                     diffuse = normalize(diffuse);
                     let reflect = normalize(calcReflect(vector, normal));
-                    if (random[x][y][i].x < ray.object.shader.transmission) {
+                    // Make this some kind of 4d array thingy please
+                    if ((random[x][y][i].x + random[x][y][b].y) % 1 < ray.object.shader.transmission) {
+                        // Use a ray cast for this i think so u can yknow whatitcalled hit things
+                        if (ray.object.distance(ray.pos) < 0) {
+                            // If inside the object
+                            // vector = calcRefract(vector, new Position(-normal.x, -normal.y, -normal.z), ray.object.shader.ior, 1)
+                            vector = normalize(calcRefract(vector, normal, ray.object.shader.ior, lastIOR));
+                            // This needs to loop through *all* the objects, not just the one hit
+                            objects.reduce((a, b) => {
+                                return Math.min(Math.abs(b.distance(ray.pos)), a);
+                            }, Infinity);
+                            while (ray.object.distance(ray.pos) < minStep) {
+                                ray.pos.x += vector.x * minStep;
+                                ray.pos.y += vector.y * minStep;
+                                ray.pos.z += vector.z * minStep;
+                            }
+                        }
+                        else {
+                            // If outside the object
+                            vector = normalize(calcRefract(vector, normal, lastIOR, ray.object.shader.ior));
+                            while (Math.abs(ray.object.distance(ray.pos)) < minStep) {
+                                ray.pos.x += vector.x * minStep;
+                                ray.pos.y += vector.y * minStep;
+                                ray.pos.z += vector.z * minStep;
+                            }
+                        }
                         // vector = calcRefract(vector, new Position(-normal.x, -normal.y, -normal.z), ray.object.shader.ior, 1)
-                        vector = calcRefract(vector, normal, lastIOR, ray.object.shader.ior);
+                        // vector = calcRefract(vector, normal, lastIOR, ray.object.shader.ior)
                         // refractObject = JSON.stringify(ray.object)
                         lastIOR = ray.object.shader.ior;
+                        lastObject = undefined;
                     }
                     else {
                         vector = mixVector(diffuse, reflect, ray.object.shader.roughness);
