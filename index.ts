@@ -5,7 +5,7 @@ import noise from "./perlin.js"
 
 import {Position, Rotation, Shader, Color, ShapeType, Rotate, Sphere, Box, Torus, Plane, Subtract, Union, Intersect, Infinite, processObjects} from "./classes.js"
 
-let res = 300
+let res = 200
 
 function closestMultiple(n, x) {
     if (x > n) return x
@@ -109,9 +109,9 @@ let normalize = (vector: Position) => {
 
 let objects: any = [
     new Sphere(new Position(5,0,-1),    1, new Shader(0, 0, new Color(255,255,255), 1, 0, 1.52)),
-    new Sphere(new Position(5,0,1),    1, new Shader(1, 0, new Color(255,0,0), 1, 0, 1.52)),
-    new Box(new Position(0,0,-4), new Position(10,5,1), new Shader(0, 0, new Color(255,255,255), 1, 0, 1.52)),
-    new Box(new Position(0,0, 4), new Position(10,5,1), new Shader(0, 0, new Color(255,255,255), 1, 0, 1.52)),
+    new Sphere(new Position(5,0,1),     1, new Shader(1, 0, new Color(255,0,0), 1, 0, 1.52)),
+    new Rotate(new Box(new Position(0,0,-4), new Position(10,5,1), new Shader(0, .2, new Color(255,255,255), 1, 0, 1.52)), new Rotation(0,-10,0)),
+    new Box(new Position(0,0, 4), new Position(10,5,1), new Shader(0, .2, new Color(255,255,255), 1, 0, 1.52)),
     // new Rotate(new Box(new Position(5,0,0), new Position(1,1,1), new Shader(1, 0, new Color(255,255,255), 1, 1, 1.52)), new Rotation(0,0,0)),
     // new Sphere(new Position(6.5,0,0),  1, new Shader(0, 0, new Color(255,255,255), 1, 1, 1.52)),
     // new Sphere(new Position(5,0,0), .9, new Shader(0, 0, new Color(255,255,255), 1, 1, 1)),
