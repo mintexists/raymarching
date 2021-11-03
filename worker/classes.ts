@@ -1,6 +1,3 @@
-import { json } from "stream/consumers"
-import { SHARE_ENV } from "worker_threads"
-
 let pythag = (pos1: Position, pos2: Position=Position.zero) => Math.hypot(pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z)
 
 let localize = (pos1: Position, pos2: Position) => new Position(pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z)

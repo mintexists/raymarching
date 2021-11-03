@@ -4,10 +4,8 @@ let ctx = canvas.getContext("2d")
 import noise from "./perlin.js"
 
 import {Position, Rotation, Shader, Color, ShapeType, Rotate, Sphere, Box, Torus, Plane, Subtract, Union, Intersect, Infinite, processObjects} from "./classes.js"
-import { createBuilderStatusReporter } from "../../../node_modules/typescript/lib/typescript.js"
-import { SHARE_ENV } from "worker_threads"
 
-let res = 200
+let res = 300
 
 function closestMultiple(n, x) {
     if (x > n) return x
@@ -110,8 +108,11 @@ let normalize = (vector: Position) => {
 }
 
 let objects: any = [
-    // new Sphere(new Position(5,0,0),    1, new Shader(0, 0, new Color(255,255,255), 1, 1, 1.52)),
-    new Rotate(new Box(new Position(5,0,0), new Position(1,1,1), new Shader(1, 0, new Color(255,255,255), 1, 1, 1.52)), new Rotation(0,0,0)),
+    new Sphere(new Position(5,0,-1),    1, new Shader(0, 0, new Color(255,255,255), 1, 0, 1.52)),
+    new Sphere(new Position(5,0,1),    1, new Shader(1, 0, new Color(255,0,0), 1, 0, 1.52)),
+    new Box(new Position(0,0,-4), new Position(10,5,1), new Shader(0, 0, new Color(255,255,255), 1, 0, 1.52)),
+    new Box(new Position(0,0, 4), new Position(10,5,1), new Shader(0, 0, new Color(255,255,255), 1, 0, 1.52)),
+    // new Rotate(new Box(new Position(5,0,0), new Position(1,1,1), new Shader(1, 0, new Color(255,255,255), 1, 1, 1.52)), new Rotation(0,0,0)),
     // new Sphere(new Position(6.5,0,0),  1, new Shader(0, 0, new Color(255,255,255), 1, 1, 1.52)),
     // new Sphere(new Position(5,0,0), .9, new Shader(0, 0, new Color(255,255,255), 1, 1, 1)),
     // new Torus(new Position(5,0,0), 1, .5, new Shader(0, 0, new Color(255,255,255), 1, .5)),
